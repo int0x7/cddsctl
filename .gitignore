@@ -39,3 +39,20 @@
 
 # debug information files
 *.dwo
+
+# Build directory
+build/
+
+# 3rd_party generated directories
+3rd_party/iceoryx/
+3rd_party/cyclonedds-*/
+3rd_party/build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*~
+
+# compile_commands
+compile_commands.json
