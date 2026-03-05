@@ -58,8 +58,8 @@ jobs:
         run: |
           VERSION=${GITHUB_REF#refs/tags/v}
           # Extract changelog section for this version
-          CHANGELOG=$(awk -v ver="## \\[${VERSION}\\]" '
-            $0 ~ ver { found=1; next }
+          CHANGELOG=$(awk -v ver="## [${VERSION}]" '
+            index($0, ver) { found=1; next }
             found && /^## \[/ { exit }
             found { print }
           ' CHANGELOG.md)
