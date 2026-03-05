@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        build_type: [Release, Debug]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake g++ ninja-build libacl1-dev
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: 3rd_party
+          key: deps-${{ runner.os }}-iceoryx2.0.3-cyclonedds0.10.2
+
+      - name: Build dependencies
+        run: ./scripts/build_deps.sh
+
+      - name: Configure
+        run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+
+      - name: Build
+        run: cmake --build build -j
+
+      - name: Run tests
+        run: ./build/tests/cddsctl_tests
+
+      - name: Verify CLI
+        run: ./build/cli/cddsctl --help
