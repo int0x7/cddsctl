@@ -50,10 +50,36 @@ jobs:
           tar -czvf ${PKG_NAME}.tar.gz ${PKG_NAME}
           echo "PKG_NAME=${PKG_NAME}" >> $GITHUB_ENV
 
+      - name: Extract changelog for version
+        id: changelog
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          # Extract changelog section for this version
+          CHANGELOG=$(awk -v ver="## \\[${VERSION}\\]" '
+            $0 ~ ver { found=1; next }
+            found && /^## \[/ { exit }
+            found { print }
+          ' CHANGELOG.md)
+
+          # Write to file for release body
+          echo "$CHANGELOG" > RELEASE_NOTES.md
+
+          # Add download instructions
+          echo "" >> RELEASE_NOTES.md
+          echo "---" >> RELEASE_NOTES.md
+          echo "" >> RELEASE_NOTES.md
+          echo "## Installation" >> RELEASE_NOTES.md
+          echo "" >> RELEASE_NOTES.md
+          echo "\`\`\`bash" >> RELEASE_NOTES.md
+          echo "tar -xzf cddsctl-${VERSION}-linux-x86_64.tar.gz" >> RELEASE_NOTES.md
+          echo "sudo mv cddsctl-${VERSION}-linux-x86_64/bin/cddsctl /usr/local/bin/" >> RELEASE_NOTES.md
+          echo "\`\`\`" >> RELEASE_NOTES.md
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           files: ${{ env.PKG_NAME }}.tar.gz
-          generate_release_notes: true
+          body_path: RELEASE_NOTES.md
+          name: cddsctl ${{ github.ref_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
