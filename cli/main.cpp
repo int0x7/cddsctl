@@ -12,12 +12,32 @@
 
 namespace {
 
-constexpr const char* BANNER = R"(
-  cddsctl
-  Cyclone DDS command-line tool v" VERSION "
-)";
-
 constexpr const char* VERSION = "1.0.0";
+
+// ANSI color codes
+namespace color {
+    constexpr const char* RESET   = "\033[0m";
+    constexpr const char* BOLD    = "\033[1m";
+    constexpr const char* CYAN    = "\033[36m";
+    constexpr const char* MAGENTA = "\033[35m";
+    constexpr const char* YELLOW  = "\033[33m";
+    constexpr const char* GREEN   = "\033[32m";
+    constexpr const char* DIM     = "\033[2m";
+}
+
+void print_banner() {
+    std::cout << color::BOLD << color::CYAN << R"(
+    _____ _____  _____   _____  _____ _______ _
+   / ____|  __ \|  __ \ / ____|/ ____|__   __| |
+  | |    | |  | | |  | | (___ | |       | |  | |
+  | |    | |  | | |  | |\___ \| |       | |  | |
+  | |____| |__| | |__| |____) | |____   | |  | |____
+   \_____|_____/|_____/|_____/ \_____|  |_|  |______|
+)" << color::RESET << "\n"
+       << color::MAGENTA << "  ╔══════════════════════════════════════════╗\n"
+       << "  ║" << color::BOLD << color::YELLOW << "   Cyclone DDS Command Line Tool" << color::RESET << color::MAGENTA << "         ║\n"
+       << "  ╚══════════════════════════════════════════╝" << color::RESET << "\n";
+}
 
 // Command entry: factory (nullptr = not implemented) + description
 struct CommandEntry {
@@ -41,16 +61,20 @@ const std::unordered_map<std::string, CommandEntry>& get_commands() {
 }
 
 void print_usage(const char* program_name) {
-    std::cout << "\n  cddsctl - Cyclone DDS command-line tool v" << VERSION << "\n\n"
-              << "Usage: " << program_name << " <command> [options]\n\n"
-              << "Commands:\n";
+    print_banner();
+
+    std::cout << "\n  " << color::DIM << "Version: " << color::RESET << color::GREEN << VERSION << color::RESET << "\n\n"
+              << "  " << color::BOLD << "Usage:" << color::RESET << " " << program_name << " <command> [options]\n\n"
+              << "  " << color::BOLD << "Commands:" << color::RESET << "\n";
 
     for (const auto& [name, entry] : get_commands()) {
         const char* status = entry.factory ? "" : " (coming soon)";
-        std::cout << "  " << name << "\t" << entry.description << status << "\n";
+        std::cout << "    " << color::CYAN << name << color::RESET
+                  << "\t  " << color::DIM << entry.description << status << color::RESET << "\n";
     }
 
-    std::cout << "\nRun '" << program_name << " <command> --help' for more information.\n";
+    std::cout << "\n  " << color::DIM << "Run '" << color::RESET << program_name
+              << " <command> --help" << color::DIM << "' for more information." << color::RESET << "\n\n";
 }
 
 void print_version() {

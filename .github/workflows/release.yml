@@ -1,0 +1,59 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake g++ ninja-build libacl1-dev
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: 3rd_party
+          key: deps-${{ runner.os }}-iceoryx2.0.3-cyclonedds0.10.2
+
+      - name: Build dependencies
+        run: ./scripts/build_deps.sh
+
+      - name: Configure
+        run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build -j
+
+      - name: Run tests
+        run: ./build/tests/cddsctl_tests
+
+      - name: Package
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          PKG_NAME="cddsctl-${VERSION}-linux-x86_64"
+          mkdir -p ${PKG_NAME}/bin
+
+          # Copy executable (statically linked, no .so needed)
+          cp build/cli/cddsctl ${PKG_NAME}/bin/
+          strip ${PKG_NAME}/bin/cddsctl
+
+          # Create tarball
+          tar -czvf ${PKG_NAME}.tar.gz ${PKG_NAME}
+          echo "PKG_NAME=${PKG_NAME}" >> $GITHUB_ENV
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.PKG_NAME }}.tar.gz
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

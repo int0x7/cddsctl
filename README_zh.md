@@ -1,10 +1,37 @@
 # cddsctl
 
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![C++17](https://img.shields.io/badge/C%2B%2B-17-blue.svg)](https://isocpp.org/std/the-standard) [![Platform](https://img.shields.io/badge/Platform-Linux-lightgrey.svg)](https://www.linux.org/) [![CycloneDDS](https://img.shields.io/badge/CycloneDDS-0.10.2-green.svg)](https://cyclonedds.io/) [![Build Status](https://github.com/int0x7/cddsctl/actions/workflows/build.yml/badge.svg)](https://github.com/int0x7/cddsctl/actions) [![GitHub release](https://img.shields.io/github/v/release/int0x7/cddsctl)](https://github.com/int0x7/cddsctl/releases) [![GitHub stars](https://img.shields.io/github/stars/int0x7/cddsctl)](https://github.com/int0x7/cddsctl/stargazers)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![C++17](https://img.shields.io/badge/C%2B%2B-17-blue.svg)](https://isocpp.org/std/the-standard) [![Platform](https://img.shields.io/badge/Platform-Linux-lightgrey.svg)](https://www.linux.org/) [![CycloneDDS](https://img.shields.io/badge/CycloneDDS-0.10.2-green.svg)](https://cyclonedds.io/) [![CI](https://github.com/int0x7/cddsctl/actions/workflows/ci.yml/badge.svg)](https://github.com/int0x7/cddsctl/actions) [![GitHub release](https://img.shields.io/github/v/release/int0x7/cddsctl)](https://github.com/int0x7/cddsctl/releases) [![GitHub stars](https://img.shields.io/github/stars/int0x7/cddsctl)](https://github.com/int0x7/cddsctl/stargazers)
 
 **cddsctl**（Cyclone DDS Control）是一个面向 **CycloneDDS** 的命令行工具，用于查看、打印和记录 DDS 数据，提供与 `ros2 topic` / `ros2 bag` 相近的使用体验，但 **不依赖 ROS**，专注于原生 DDS 数据空间。
 
 [English](README.md)
+
+```
+$ cddsctl --help
+
+    _____ _____  _____   _____  _____ _______ _
+   / ____|  __ \|  __ \ / ____|/ ____|__   __| |
+  | |    | |  | | |  | | (___ | |       | |  | |
+  | |    | |  | | |  | |\___ \| |       | |  | |
+  | |____| |__| | |__| |____) | |____   | |  | |____
+   \_____|_____/|_____/|_____/ \_____|  |_|  |______|
+
+  ╔══════════════════════════════════════════╗
+  ║   Cyclone DDS Command Line Tool          ║
+  ╚══════════════════════════════════════════╝
+
+  Version: 1.0.0
+
+  Usage: cddsctl <command> [options]
+
+  Commands:
+    info      Show information about a DDS topic
+    list      List available DDS topics
+    echo      Print messages from a DDS topic
+    record    Record DDS topics to MCAP file
+
+  Run 'cddsctl <command> --help' for more information.
+```
 
 核心功能：
 
@@ -20,20 +47,41 @@
 - 面向 CycloneDDS
 - 统一 CLI 体验：`list / echo / record`
 - 记录格式：MCAP（便于后续回放、分析、可视化）
+- 完全静态链接（便于部署）
 - 适合调试、联调、数据采集与问题复现
 
 ---
 
 ## 安装
 
-源码构建：
+### 下载发布版本
+
+从 [Releases](https://github.com/int0x7/cddsctl/releases) 下载预编译二进制：
 
 ```bash
-git clone https://github.com/<your-org>/cddsctl.git
+tar -xzf cddsctl-*.tar.gz
+./cddsctl-*/bin/cddsctl --help
+```
+
+### 源码构建
+
+```bash
+git clone https://github.com/int0x7/cddsctl.git
 cd cddsctl
-mkdir -p build && cd build
-cmake ..
-cmake --build . -j
+./build.sh
+```
+
+构建脚本会自动：
+- 下载并编译依赖（yaml-cpp, iceoryx, CycloneDDS）为静态库
+- 静态链接所有依赖构建 cddsctl
+
+构建选项：
+
+```bash
+./build.sh -t          # 构建并运行测试
+./build.sh -c          # 清理后重新构建
+./build.sh --clean-deps # 重新编译所有依赖
+./build.sh -h          # 显示帮助
 ```
 
 构建完成后将生成二进制：

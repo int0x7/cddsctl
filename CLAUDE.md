@@ -9,10 +9,19 @@ cddsctl (Cyclone DDS Control) is a command-line tool for CycloneDDS that provide
 ## Build Commands
 
 ```bash
-# Full build
-mkdir -p build && cd build && cmake .. && cmake --build . -j
+# One-command build (auto-builds dependencies if missing)
+./build.sh
 
-# Rebuild after changes (from project root)
+# Build with tests
+./build.sh -t
+
+# Clean build
+./build.sh -c
+
+# Rebuild dependencies from source
+./build.sh --clean-deps
+
+# Manual build (after dependencies are ready)
 cmake --build build -j
 
 # Run all tests
@@ -25,11 +34,12 @@ cmake --build build -j
 
 # Run CLI
 ./build/cli/cddsctl --help
-./build/cli/cddsctl record --help
-./build/cli/cddsctl echo --help
-
-# Echo a topic (YAML output)
+./build/cli/cddsctl list
 ./build/cli/cddsctl echo /test/sensor -n 5
+./build/cli/cddsctl record /test/sensor -o log.mcap
+
+# Run test publisher (for testing echo/record)
+./build/examples/test_publisher --topic /test/sensor --rate 10
 ```
 
 ## Architecture
@@ -42,14 +52,6 @@ cddsctl_core  →  cddsctl_dds  →  cddsctl_recorder  →  cddsctl (CLI)
  yaml-cpp      CycloneDDS         mcap, json
  spdlog        iceoryx
 ```
-
-### Directory Layout
-
-- `include/cddsctl/` - Public headers organized by module (core/, dds/, record/, cli/)
-- `src/` - Implementation files matching header structure
-- `cli/` - CLI entry point and subcommands
-- `tests/` - Catch2 unit tests
-- `3rd_party/` - Vendored dependencies
 
 ### Key Components
 
@@ -78,10 +80,14 @@ cddsctl_core  →  cddsctl_dds  →  cddsctl_recorder  →  cddsctl (CLI)
 
 ## Dependencies
 
-All dependencies are vendored in `3rd_party/`:
-- CycloneDDS (0.10.2) + iceoryx for SHM support
-- MCAP for recording format
-- nlohmann-json, spdlog, optionparser, yaml-cpp
+Dependencies are built as static libraries via `scripts/build_deps.sh`:
+- yaml-cpp (0.8.0)
+- iceoryx (2.0.3) for SHM support
+- CycloneDDS (0.10.2)
+- CycloneDDS-CXX (0.10.2)
+
+Header-only libraries in `3rd_party/`:
+- MCAP, nlohmann-json, spdlog, optionparser
 
 ## Language
 
