@@ -7,7 +7,7 @@ target_include_directories(cddsctl_core PUBLIC
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
-target_link_libraries(cddsctl_core PUBLIC yaml-cpp spdlog)
+target_link_libraries(cddsctl_core PUBLIC yaml-cpp::yaml-cpp spdlog)
 
 # DDS library
 add_library(cddsctl_dds STATIC

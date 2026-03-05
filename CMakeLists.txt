@@ -17,11 +17,12 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Third-party directory
 set(CDDSCTL_3RD_PARTY ${CMAKE_CURRENT_SOURCE_DIR}/3rd_party)
 
-# iceoryx + CycloneDDS (SHM enabled)
+# Third-party library paths
+set(YAMLCPP_DIR ${CDDSCTL_3RD_PARTY}/yaml-cpp)
 set(ICEORYX_DIR ${CDDSCTL_3RD_PARTY}/iceoryx)
 set(CYCLONEDDS_DIR ${CDDSCTL_3RD_PARTY}/cyclonedds-0.10.2)
 set(CYCLONEDDS_CXX_DIR ${CDDSCTL_3RD_PARTY}/cyclonedds-cxx-0.10.2)
-list(APPEND CMAKE_PREFIX_PATH ${ICEORYX_DIR} ${CYCLONEDDS_DIR} ${CYCLONEDDS_CXX_DIR})
+list(APPEND CMAKE_PREFIX_PATH ${YAMLCPP_DIR} ${ICEORYX_DIR} ${CYCLONEDDS_DIR} ${CYCLONEDDS_CXX_DIR})
 
 # CycloneDDS depends on iceoryx, need to find iceoryx targets first (static libs)
 find_package(iceoryx_hoofs REQUIRED)
@@ -33,7 +34,8 @@ get_target_property(_ddsc_inc CycloneDDS::ddsc INTERFACE_INCLUDE_DIRECTORIES)
 list(GET _ddsc_inc 0 _first_inc)
 message(STATUS "Found CycloneDDS with headers at ${_first_inc}")
 
-# Find yaml-cpp
+# Find yaml-cpp (prefer local static build)
+set(yaml-cpp_DIR ${YAMLCPP_DIR}/lib/cmake/yaml-cpp)
 find_package(yaml-cpp REQUIRED)
 
 # MCAP library
