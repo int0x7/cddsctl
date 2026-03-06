@@ -16,6 +16,7 @@ add_library(cddsctl_dds STATIC
     dds/RawDataReader.cpp
     dds/TypeSupport.cpp
     dds/YamlPrinter.cpp
+    dds/JsonPrinter.cpp
 )
 target_include_directories(cddsctl_dds PUBLIC
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
@@ -27,6 +28,7 @@ target_link_libraries(cddsctl_dds PUBLIC
     iceoryx_binding_c::iceoryx_binding_c
     iceoryx_posh::iceoryx_posh
     iceoryx_hoofs::iceoryx_hoofs
+    nlohmann_json
     Threads::Threads
 )
 
