@@ -11,7 +11,7 @@ BUILD_DIR="${THIRD_PARTY}/build"
 JOBS=$(nproc 2>/dev/null || echo 4)
 
 # Versions
-ICEORYX_VERSION="2.0.3"
+ICEORYX_VERSION="2.0.5"
 CYCLONEDDS_VERSION="0.10.2"
 YAMLCPP_VERSION="0.8.0"
 
