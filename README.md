@@ -20,7 +20,7 @@ $ cddsctl --help
   ║   Cyclone DDS Command Line Tool          ║
   ╚══════════════════════════════════════════╝
 
-  Version: 1.0.0
+  Version: 1.0.0 (with SHM)
 
   Usage: cddsctl <command> [options]
 
@@ -29,6 +29,7 @@ $ cddsctl --help
     list      List available DDS topics
     echo      Print messages from a DDS topic
     record    Record DDS topics to MCAP file
+    ps        Show DDS participants and applications
 
   Run 'cddsctl <command> --help' for more information.
 ```
@@ -81,9 +82,12 @@ Core Features:
 Download pre-built binary from [Releases](https://github.com/int0x7/cddsctl/releases):
 
 ```bash
-tar -xzf cddsctl-*.tar.gz
-./cddsctl-*/bin/cddsctl --help
+tar -xzf cddsctl-*-linux-x86_64.tar.gz
+sudo mv cddsctl-*/bin/cddsctl /usr/local/bin/
+cddsctl --help
 ```
+
+The release binary is built with CycloneDDS 0.10.2 and iceoryx 2.0.5. Shared memory transport is used automatically when a compatible RouDi (iceoryx 2.0.5) daemon is running; otherwise it falls back to UDP network transport.
 
 ### Build from Source
 
