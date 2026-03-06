@@ -2,7 +2,7 @@
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![C++17](https://img.shields.io/badge/C%2B%2B-17-blue.svg)](https://isocpp.org/std/the-standard) [![Platform](https://img.shields.io/badge/Platform-Linux-lightgrey.svg)](https://www.linux.org/) [![CycloneDDS](https://img.shields.io/badge/CycloneDDS-0.10.2-green.svg)](https://cyclonedds.io/) [![CI](https://github.com/int0x7/cddsctl/actions/workflows/ci.yml/badge.svg)](https://github.com/int0x7/cddsctl/actions) [![GitHub release](https://img.shields.io/github/v/release/int0x7/cddsctl)](https://github.com/int0x7/cddsctl/releases) [![GitHub stars](https://img.shields.io/github/stars/int0x7/cddsctl)](https://github.com/int0x7/cddsctl/stargazers)
 
-**cddsctl** (Cyclone DDS Control) is a command-line tool for **CycloneDDS** that provides functionality similar to `ros2 topic` / `ros2 bag`, but **without ROS dependency**. It operates directly on native DDS data space.
+**cddsctl** (Cyclone DDS Control) is a zero-config **DDS CLI tool** for topic discovery, real-time data inspection, and traffic recording — a `ros2 topic` / `ros2 bag` alternative that requires **no ROS dependency**. Built on **CycloneDDS** with **XTypes** introspection and **iceoryx** shared-memory support, it ships as a single statically-linked binary and writes recordings in the **MCAP** format.
 
 [中文文档](README_zh.md)
 
@@ -49,6 +49,28 @@ Core Features:
 - Recording format: MCAP (easy playback, analysis, and visualization)
 - Fully static linked binary (easy deployment)
 - Ideal for debugging, integration testing, data collection, and issue reproduction
+
+---
+
+## Why cddsctl?
+
+| | cddsctl | ros2 bag |
+|---|---|---|
+| ROS dependency | No | Yes |
+| DDS implementation | CycloneDDS | Any (via ROS) |
+| Single binary | Yes (static) | No (ROS workspace) |
+| Auto type discovery | Yes (XTypes) | Via ROS type system |
+| Output format | MCAP | db3 / MCAP |
+| Shared memory | Yes (iceoryx) | Yes (iceoryx) |
+
+---
+
+## Use Cases
+
+- **Robotics DDS debugging without ROS** — inspect and echo topics on any CycloneDDS network
+- **Recording DDS traffic for offline analysis** — capture to MCAP, visualize in [Foxglove Studio](https://foxglove.dev)
+- **Integration testing with DDS data capture** — record topic streams during CI or manual test runs
+- **Headless / embedded deployment** — single static binary, no runtime dependencies
 
 ---
 
@@ -191,6 +213,15 @@ Example:
 ```bash
 cddsctl record MotorState -o motor.mcap
 ```
+
+---
+
+## Related Projects
+
+- [CycloneDDS](https://github.com/eclipse-cyclonedds/cyclonedds) — the DDS implementation cddsctl is built on
+- [iceoryx](https://github.com/eclipse-iceoryx/iceoryx) — zero-copy shared-memory transport
+- [MCAP](https://mcap.dev) — open-source recording format used by cddsctl
+- [Foxglove Studio](https://foxglove.dev) — visualize and replay MCAP files
 
 ---
 

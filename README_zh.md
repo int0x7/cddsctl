@@ -2,7 +2,7 @@
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![C++17](https://img.shields.io/badge/C%2B%2B-17-blue.svg)](https://isocpp.org/std/the-standard) [![Platform](https://img.shields.io/badge/Platform-Linux-lightgrey.svg)](https://www.linux.org/) [![CycloneDDS](https://img.shields.io/badge/CycloneDDS-0.10.2-green.svg)](https://cyclonedds.io/) [![CI](https://github.com/int0x7/cddsctl/actions/workflows/ci.yml/badge.svg)](https://github.com/int0x7/cddsctl/actions) [![GitHub release](https://img.shields.io/github/v/release/int0x7/cddsctl)](https://github.com/int0x7/cddsctl/releases) [![GitHub stars](https://img.shields.io/github/stars/int0x7/cddsctl)](https://github.com/int0x7/cddsctl/stargazers)
 
-**cddsctl**（Cyclone DDS Control）是一个面向 **CycloneDDS** 的命令行工具，用于查看、打印和记录 DDS 数据，提供与 `ros2 topic` / `ros2 bag` 相近的使用体验，但 **不依赖 ROS**，专注于原生 DDS 数据空间。
+**cddsctl**（Cyclone DDS Control）是一个零配置的 **DDS 命令行工具**，支持 topic 自动发现、实时数据查看和流量录制，提供与 `ros2 topic` / `ros2 bag` 相近的使用体验，但 **不依赖 ROS**。基于 **CycloneDDS** 构建，支持 **XTypes** 类型自省和 **iceoryx** 共享内存传输，以单个静态链接二进制文件交付，录制格式为 **MCAP**。
 
 [English](README.md)
 
@@ -49,6 +49,28 @@ $ cddsctl --help
 - 记录格式：MCAP（便于后续回放、分析、可视化）
 - 完全静态链接（便于部署）
 - 适合调试、联调、数据采集与问题复现
+
+---
+
+## 为什么选择 cddsctl？
+
+| | cddsctl | ros2 bag |
+|---|---|---|
+| ROS 依赖 | 无 | 是 |
+| DDS 实现 | CycloneDDS | 任意（通过 ROS） |
+| 单一二进制 | 是（静态链接） | 否（需要 ROS 工作空间） |
+| 自动类型发现 | 是（XTypes） | 通过 ROS 类型系统 |
+| 输出格式 | MCAP | db3 / MCAP |
+| 共享内存 | 是（iceoryx） | 是（iceoryx） |
+
+---
+
+## 使用场景
+
+- **无 ROS 环境下的 DDS 调试** — 在任意 CycloneDDS 网络上查看和打印 topic
+- **录制 DDS 流量用于离线分析** — 录制为 MCAP，使用 [Foxglove Studio](https://foxglove.dev) 可视化
+- **集成测试中的 DDS 数据采集** — 在 CI 或手动测试中录制 topic 数据流
+- **无头/嵌入式部署** — 单个静态二进制，无运行时依赖
 
 ---
 
@@ -191,6 +213,15 @@ cddsctl record <topic...> -o <file.mcap>
 ```bash
 cddsctl record MotorState -o motor.mcap
 ```
+
+---
+
+## 相关项目
+
+- [CycloneDDS](https://github.com/eclipse-cyclonedds/cyclonedds) — cddsctl 所基于的 DDS 实现
+- [iceoryx](https://github.com/eclipse-iceoryx/iceoryx) — 零拷贝共享内存传输
+- [MCAP](https://mcap.dev) — cddsctl 使用的开源录制格式
+- [Foxglove Studio](https://foxglove.dev) — 可视化和回放 MCAP 文件
 
 ---
 
