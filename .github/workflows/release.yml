@@ -25,16 +25,12 @@ jobs:
         uses: actions/cache@v4
         with:
           path: 3rd_party
-          key: deps-${{ runner.os }}-iceoryx2.0.3-cyclonedds0.10.2
-
-      - name: Build dependencies
-        run: ./scripts/build_deps.sh
-
-      - name: Configure
-        run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+          key: deps-${{ runner.os }}-cyclonedds0.10.2-shm
 
       - name: Build
-        run: cmake --build build -j
+        run: |
+          ./build.sh -c
+          strip build/cli/cddsctl
 
       - name: Run tests
         run: ./build/tests/cddsctl_tests
@@ -44,14 +40,29 @@ jobs:
           VERSION=${GITHUB_REF#refs/tags/v}
           PKG_NAME="cddsctl-${VERSION}-linux-x86_64"
           mkdir -p ${PKG_NAME}/bin
-
-          # Copy executable (statically linked, no .so needed)
           cp build/cli/cddsctl ${PKG_NAME}/bin/
-          strip ${PKG_NAME}/bin/cddsctl
-
-          # Create tarball
           tar -czvf ${PKG_NAME}.tar.gz ${PKG_NAME}
           echo "PKG_NAME=${PKG_NAME}" >> $GITHUB_ENV
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.PKG_NAME }}
+          path: ${{ env.PKG_NAME }}.tar.gz
+
+  release:
+    runs-on: ubuntu-20.04
+    needs: build
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
 
       - name: Extract changelog for version
         id: changelog
@@ -77,11 +88,14 @@ jobs:
           echo "tar -xzf cddsctl-${VERSION}-linux-x86_64.tar.gz" >> RELEASE_NOTES.md
           echo "sudo mv cddsctl-${VERSION}-linux-x86_64/bin/cddsctl /usr/local/bin/" >> RELEASE_NOTES.md
           echo "\`\`\`" >> RELEASE_NOTES.md
+          echo "" >> RELEASE_NOTES.md
+          echo "Built with CycloneDDS 0.10.2 and iceoryx 2.0.5 (shared memory)." >> RELEASE_NOTES.md
+          echo "SHM is used automatically when a compatible RouDi daemon is running; otherwise falls back to UDP." >> RELEASE_NOTES.md
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          files: ${{ env.PKG_NAME }}.tar.gz
+          files: artifacts/*.tar.gz
           body_path: RELEASE_NOTES.md
           name: cddsctl ${{ github.ref_name }}
         env:
