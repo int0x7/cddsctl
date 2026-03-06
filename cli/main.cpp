@@ -2,6 +2,7 @@
 #include "commands/ListCommand.hpp"
 #include "commands/InfoCommand.hpp"
 #include "commands/EchoCommand.hpp"
+#include "commands/PsCommand.hpp"
 #include <cddsctl/cli/Command.hpp>
 
 #include <iostream>
@@ -13,6 +14,8 @@
 namespace {
 
 constexpr const char* VERSION = "1.0.0";
+
+constexpr const char* SHM_STATUS = "with SHM";
 
 // ANSI color codes
 namespace color {
@@ -56,6 +59,8 @@ const std::unordered_map<std::string, CommandEntry>& get_commands() {
                     "List available DDS topics"}},
         {"info",   {[]() { return std::make_unique<cddsctl::cli::InfoCommand>(); },
                     "Show information about a DDS topic"}},
+        {"ps",     {[]() { return std::make_unique<cddsctl::cli::PsCommand>(); },
+                    "Show DDS participants and applications"}},
     };
     return commands;
 }
@@ -63,7 +68,8 @@ const std::unordered_map<std::string, CommandEntry>& get_commands() {
 void print_usage(const char* program_name) {
     print_banner();
 
-    std::cout << "\n  " << color::DIM << "Version: " << color::RESET << color::GREEN << VERSION << color::RESET << "\n\n"
+    std::cout << "\n  " << color::DIM << "Version: " << color::RESET << color::GREEN << VERSION
+              << " (" << SHM_STATUS << ")" << color::RESET << "\n\n"
               << "  " << color::BOLD << "Usage:" << color::RESET << " " << program_name << " <command> [options]\n\n"
               << "  " << color::BOLD << "Commands:" << color::RESET << "\n";
 
@@ -78,7 +84,7 @@ void print_usage(const char* program_name) {
 }
 
 void print_version() {
-    std::cout << "cddsctl version " << VERSION << "\n";
+    std::cout << "cddsctl version " << VERSION << " (" << SHM_STATUS << ")\n";
 }
 
 }  // namespace
