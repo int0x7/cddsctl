@@ -18,6 +18,7 @@ add_executable(test_publisher
 target_link_libraries(test_publisher PRIVATE
     TestTypes
     CycloneDDS-CXX::ddscxx
+    Threads::Threads
 )
 
 # Install
