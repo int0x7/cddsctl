@@ -27,7 +27,7 @@ cmake --build build -j
 # Run all tests
 ./build/tests/cddsctl_tests
 
-# Run specific test by name pattern
+# Run specific test by name pattern (Catch2 tag syntax)
 ./build/tests/cddsctl_tests "[config]"
 ./build/tests/cddsctl_tests "[guid]"
 ./build/tests/cddsctl_tests "[topic_filter]"
@@ -35,6 +35,7 @@ cmake --build build -j
 # Run CLI
 ./build/cli/cddsctl --help
 ./build/cli/cddsctl list
+./build/cli/cddsctl info /test/sensor
 ./build/cli/cddsctl echo /test/sensor -n 5
 ./build/cli/cddsctl record /test/sensor -o log.mcap
 
@@ -44,11 +45,20 @@ cmake --build build -j
 
 ## Architecture
 
+### Source Layout
+
+- `include/cddsctl/` - Public headers (mirrors namespace structure: `core/`, `dds/`, `cli/`, `record/`)
+- `src/` - Library implementations (three static libs: `cddsctl_core`, `cddsctl_dds`, `cddsctl_recorder`)
+- `cli/` - CLI binary and subcommand implementations (`cli/commands/`)
+- `tests/` - Catch2 unit tests
+- `examples/` - Test publisher for manual testing
+- `3rd_party/` - Header-only libs (mcap, nlohmann-json, spdlog, optionparser, catch2) and built deps
+
 ### Library Dependency Chain
 
 ```
-cddsctl_core  →  cddsctl_dds  →  cddsctl_recorder  →  cddsctl (CLI)
-    ↓                ↓                 ↓
+cddsctl_core  ->  cddsctl_dds  ->  cddsctl_recorder  ->  cddsctl (CLI)
+    |                |                 |
  yaml-cpp      CycloneDDS         mcap, json
  spdlog        iceoryx
 ```
@@ -74,20 +84,20 @@ cddsctl_core  →  cddsctl_dds  →  cddsctl_recorder  →  cddsctl (CLI)
 
 ### Adding New Commands
 
-1. Create `cli/commands/FooCommand.hpp` implementing `cddsctl::cli::Command`
+1. Create `cli/commands/FooCommand.hpp` implementing `cddsctl::cli::Command` (virtual interface in `include/cddsctl/cli/Command.hpp`)
 2. Create `cli/commands/FooCommand.cpp` with `execute()` implementation
-3. Register in `cli/main.cpp`
+3. Register in `cli/main.cpp` via the `get_commands()` registry map
 
 ## Dependencies
 
-Dependencies are built as static libraries via `scripts/build_deps.sh`:
+Built as static libraries via `scripts/build_deps.sh`:
 - yaml-cpp (0.8.0)
 - iceoryx (2.0.3) for SHM support
 - CycloneDDS (0.10.2)
 - CycloneDDS-CXX (0.10.2)
 
 Header-only libraries in `3rd_party/`:
-- MCAP, nlohmann-json, spdlog, optionparser
+- MCAP, nlohmann-json, spdlog, optionparser, Catch2
 
 ## Language
 
