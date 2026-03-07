@@ -4,6 +4,7 @@
 #include <cddsctl/dds/RawDataReader.hpp>
 #include <cddsctl/dds/TypeSupport.hpp>
 #include <cddsctl/dds/YamlPrinter.hpp>
+#include <cddsctl/dds/JsonPrinter.hpp>
 #include <cddsctl/core/Log.hpp>
 
 #include <dds/ddsi/ddsi_serdata.h>
@@ -44,7 +45,13 @@ enum OptionIndex {
     DOMAIN,
     COUNT,
     TIMEOUT,
-    NO_TIMESTAMP
+    NO_TIMESTAMP,
+    FORMAT
+};
+
+enum class OutputFormat {
+    YAML,
+    JSON
 };
 
 const option::Descriptor usage[] = {
@@ -62,18 +69,22 @@ const option::Descriptor usage[] = {
         "  -t, --timeout=SEC     discovery timeout in seconds (default: 2.0)"},
     {NO_TIMESTAMP, 0, "", "no-timestamp", option::Arg::None,
         "  --no-timestamp        don't show timestamps"},
+    {FORMAT, 0, "F", "format", option::Arg::Optional,
+        "  -F, --format=FMT      output format: yaml, json (default: yaml)"},
     {0, 0, nullptr, nullptr, nullptr, nullptr}
 };
 
 /**
- * @brief Take CDR samples from reader and print them in YAML format
+ * @brief Take CDR samples from reader and print them
  * @param reader DDS reader entity handle
  * @param show_timestamp Whether to show timestamp for each message
- * @param descriptor Topic descriptor for YAML formatting (optional)
+ * @param descriptor Topic descriptor for formatted output (optional)
+ * @param format Output format (YAML, JSON, or RAW)
  * @return Number of samples printed
  */
 size_t take_and_print(dds_entity_t reader, bool show_timestamp,
-                      const dds_topic_descriptor_t* descriptor) {
+                      const dds_topic_descriptor_t* descriptor,
+                      OutputFormat format) {
     constexpr size_t MAX_SAMPLES = 32;
     dds_sample_info_t infos[MAX_SAMPLES];
     struct ddsi_serdata* serdatas[MAX_SAMPLES];
@@ -160,36 +171,50 @@ size_t take_and_print(dds_entity_t reader, bool show_timestamp,
             uint8_t encap = cdr_data[1];
             xcdr_version = (encap >= 0x06) ? CDR_ENC_VERSION_2 : CDR_ENC_VERSION_1;
 
-            bool printed_yaml = false;
-
-            // Try YAML format first if descriptor is available
-            if (dds::YamlPrinter::is_available(descriptor)) {
-                std::string yaml = dds::YamlPrinter::format(
-                    cdr_data + 4, cdr_len - 4, descriptor, xcdr_version);
-                if (!yaml.empty()) {
-                    std::cout << yaml;
-                    printed_yaml = true;
+            if (format == OutputFormat::JSON) {
+                bool printed_json = false;
+                if (dds::JsonPrinter::is_available(descriptor)) {
+                    std::string json_str = dds::JsonPrinter::format(
+                        cdr_data + 4, cdr_len - 4, descriptor, xcdr_version);
+                    if (!json_str.empty()) {
+                        std::cout << json_str;
+                        printed_json = true;
+                    }
                 }
-            }
-
-            // Fallback to compact format
-            if (!printed_yaml) {
-                dds_istream_t is;
-                dds_istream_init(&is, static_cast<uint32_t>(cdr_len - 4),
-                                 cdr_data + 4, xcdr_version);
-
-                char buf[16384];
-                buf[0] = '\0';
-                size_t written = dds_stream_print_sample(&is, sertype_default, buf, sizeof(buf));
-
-                if (written > 0 && written < sizeof(buf)) {
-                    std::cout << buf << "\n";
-                } else if (written >= sizeof(buf)) {
-                    buf[sizeof(buf) - 1] = '\0';
-                    std::cout << buf << "...(truncated)\n";
+                if (!printed_json) {
+                    std::cout << "{\"error\": \"type metadata not available\"}\n";
+                }
+            } else {
+                // YAML (default)
+                bool printed_yaml = false;
+                if (dds::YamlPrinter::is_available(descriptor)) {
+                    std::string yaml = dds::YamlPrinter::format(
+                        cdr_data + 4, cdr_len - 4, descriptor, xcdr_version);
+                    if (!yaml.empty()) {
+                        std::cout << yaml;
+                        printed_yaml = true;
+                    }
                 }
 
-                dds_istream_fini(&is);
+                // Fallback to compact format
+                if (!printed_yaml) {
+                    dds_istream_t is;
+                    dds_istream_init(&is, static_cast<uint32_t>(cdr_len - 4),
+                                     cdr_data + 4, xcdr_version);
+
+                    char buf[16384];
+                    buf[0] = '\0';
+                    size_t written = dds_stream_print_sample(&is, sertype_default, buf, sizeof(buf));
+
+                    if (written > 0 && written < sizeof(buf)) {
+                        std::cout << buf << "\n";
+                    } else if (written >= sizeof(buf)) {
+                        buf[sizeof(buf) - 1] = '\0';
+                        std::cout << buf << "...(truncated)\n";
+                    }
+
+                    dds_istream_fini(&is);
+                }
             }
         }
 
@@ -243,6 +268,17 @@ int EchoCommand::execute(int argc, char* argv[]) {
 
     if (options[TIMEOUT] && options[TIMEOUT].arg) {
         timeout_sec = std::stod(options[TIMEOUT].arg);
+    }
+
+    OutputFormat output_format = OutputFormat::YAML;
+    if (options[FORMAT] && options[FORMAT].arg) {
+        std::string fmt = options[FORMAT].arg;
+        if (fmt == "json") {
+            output_format = OutputFormat::JSON;
+        } else if (fmt != "yaml") {
+            std::cerr << "Error: unknown format '" << fmt << "' (use yaml or json)\n";
+            return 1;
+        }
     }
 
     // Collect non-option arguments (topic name)
@@ -364,7 +400,7 @@ int EchoCommand::execute(int argc, char* argv[]) {
         {
             std::lock_guard<std::mutex> lock(reader_mutex);
             if (reader && reader->is_valid()) {
-                size_t samples = take_and_print(reader->handle(), show_timestamp, topic_descriptor);
+                size_t samples = take_and_print(reader->handle(), show_timestamp, topic_descriptor, output_format);
                 printed_count += samples;
             }
         }
