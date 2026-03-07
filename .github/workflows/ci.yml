@@ -21,8 +21,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y cmake g++ ninja-build libacl1-dev
+          apt-get update
+          apt-get install -y cmake g++ ninja-build libacl1-dev git
 
       - name: Cache dependencies
         uses: actions/cache@v4
