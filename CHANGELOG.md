@@ -11,9 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **CLI Commands**
   - `list` - List all discovered DDS topics
-  - `echo` - Subscribe and print topic messages in YAML format
+  - `echo` - Subscribe and print topic messages (YAML/JSON format)
   - `info` - Show topic type information
   - `record` - Record topics to MCAP file format
+  - `ps` - Show DDS participants with SHM status
 
 - **DDS Features**
   - Native CycloneDDS support without ROS dependency
