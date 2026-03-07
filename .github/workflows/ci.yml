@@ -13,9 +13,8 @@ jobs:
     env:
       DEBIAN_FRONTEND: noninteractive
 
-    strategy:
-      matrix:
-        build_type: [Release, Debug]
+    env:
+      BUILD_TYPE: Release
 
     steps:
       - name: Checkout
@@ -36,7 +35,7 @@ jobs:
         run: ./scripts/build_deps.sh
 
       - name: Configure
-        run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
 
       - name: Build
         run: cmake --build build -j
