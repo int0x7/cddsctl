@@ -41,6 +41,10 @@ cmake --build build -j
 
 # Run test publisher (for testing echo/record)
 ./build/examples/test_publisher --topic /test/sensor --rate 10
+
+# Run version compatibility tests
+python3 tests/test_version_compat.py 0.10.2 0.10.5  # Test cddsctl 0.10.2 with publisher 0.10.5
+python3 tests/test_version_compat.py --test-all      # Test all version combinations
 ```
 
 ## Architecture
