@@ -1,0 +1,89 @@
+// Enumeration.idl
+// Demonstrates enum definitions and their usage in structures
+// Enums provide type-safe named constants
+
+module demo {
+    module enums {
+
+        // Basic status enum
+        enum Status {
+            STATUS_UNKNOWN,     // Default/initial state
+            STATUS_OK,          // Normal operation
+            STATUS_WARNING,     // Non-critical issue
+            STATUS_ERROR,       // Critical error
+            STATUS_FATAL        // Unrecoverable error
+        };
+
+        // Robot operation mode
+        enum OperationMode {
+            MODE_IDLE,          // Not performing any action
+            MODE_INITIALIZING,  // Starting up
+            MODE_STANDBY,       // Ready for commands
+            MODE_ACTIVE,        // Executing commands
+            MODE_SHUTDOWN,      // Shutting down
+            MODE_EMERGENCY_STOP // Emergency stopped
+        };
+
+        // Coordinate frame reference
+        enum CoordinateFrame {
+            FRAME_WORLD,        // Global world coordinates
+            FRAME_BASE,         // Robot base frame
+            FRAME_TOOL,         // End-effector frame
+            FRAME_CAMERA,       // Camera reference frame
+            FRAME_CUSTOM        // User-defined frame
+        };
+
+        // Joint type for kinematics
+        enum JointType {
+            JOINT_REVOLUTE,     // Rotational joint
+            JOINT_PRISMATIC,    // Linear/translational joint
+            JOINT_FIXED,        // Rigid connection
+            JOINT_PLANAR,       // 2D planar joint
+            JOINT_FLOATING      // 6-DOF floating joint
+        };
+
+        // Sensor data quality (without explicit values for compatibility)
+        enum DataQuality {
+            QUALITY_INVALID,    // Invalid/uninitialized
+            QUALITY_POOR,       // Poor quality
+            QUALITY_FAIR,       // Fair quality
+            QUALITY_GOOD,       // Good quality
+            QUALITY_EXCELLENT   // Excellent quality
+        };
+
+        // Status message using enums
+        struct SystemStatus {
+            long long timestamp;
+
+            // Multiple enum fields
+            Status overall_status;
+            OperationMode current_mode;
+            CoordinateFrame reference_frame;
+
+            // Enum with value
+            DataQuality signal_quality;
+
+            // Status flags
+            boolean is_homed;
+            boolean motors_enabled;
+        };
+
+        // Joint information with enum
+        struct JointInfo {
+            string name;
+            JointType type;
+            Status status;
+            double position;
+            double limit_min;
+            double limit_max;
+        };
+
+        // Complete system state with enums
+        struct RobotStatus {
+            SystemStatus system;
+            sequence<JointInfo> joints;
+            string status_message;
+        };
+
+    };
+};

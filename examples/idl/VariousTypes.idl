@@ -1,0 +1,55 @@
+// VariousTypes.idl
+// Demonstrates various primitive types available in OMG IDL
+// Shows all integer types, floating point, and other primitives
+
+module demo {
+    module types {
+
+        // Integer types showcase
+        struct IntegerTypes {
+            // Signed integers
+            short  short_val;           // 16-bit signed
+            long   long_val;            // 32-bit signed
+            long long longlong_val;     // 64-bit signed
+
+            // Unsigned integers
+            unsigned short ushort_val;  // 16-bit unsigned
+            unsigned long ulong_val;    // 32-bit unsigned
+            unsigned long long ulonglong_val; // 64-bit unsigned
+
+            // Character types
+            char   char_val;            // 8-bit character (ASCII)
+
+            // Boolean and byte
+            boolean bool_val;           // true/false
+            octet   byte_val;           // 8-bit opaque value (0-255)
+        };
+
+        // Floating point types
+        struct FloatingTypes {
+            float  float_val;           // 32-bit IEEE 754 float
+            double double_val;          // 64-bit IEEE 754 double
+        };
+
+        // String types
+        struct StringTypes {
+            string unbounded_str;       // Unbounded string
+        };
+
+        // All types combined in a diagnostic message
+        struct DiagnosticData {
+            long long timestamp;        // System timestamp
+            string source;              // Source component name
+
+            // Mixed primitive values
+            IntegerTypes integers;
+            FloatingTypes floats;
+            StringTypes strings;
+
+            // Raw status
+            octet raw_status[8];        // Status bytes
+            boolean is_valid;           // Data validity flag
+        };
+
+    };
+};

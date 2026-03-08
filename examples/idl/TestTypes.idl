@@ -1,0 +1,9 @@
+// Test message types for cddsctl end-to-end testing
+module test {
+    struct SensorData {
+        long id;
+        double timestamp;
+        float values[3];
+        string name;
+    };
+};

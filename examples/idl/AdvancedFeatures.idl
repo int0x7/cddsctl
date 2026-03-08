@@ -1,0 +1,244 @@
+// AdvancedFeatures.idl
+// Demonstrates advanced OMG IDL features including:
+// - Multiple levels of nesting
+// - Complex sequences of unions
+
+module demo {
+    module advanced {
+
+        struct Timestamp {
+            long long seconds;
+            unsigned long nanoseconds;
+        };
+
+        // Nested namespace-like organization using structs
+        
+        struct Vector2D {
+            double x;
+            double y;
+        };
+
+        
+        struct Vector3D {
+            double x;
+            double y;
+            double z;
+        };
+
+        // Nested transformation hierarchy
+        
+        struct Transform2D {
+            Vector2D translation;
+            double rotation;        // radians
+            double scale;
+        };
+
+        
+        struct Transform3D {
+            Vector3D translation;
+            Vector3D rotation_euler;    // roll, pitch, yaw
+            Vector3D scale;
+        };
+
+        // Complex nested structure: Region of Interest
+        
+        struct RegionOfInterest {
+            // Top-left corner
+            unsigned long x_offset;
+            unsigned long y_offset;
+
+            // Dimensions
+            unsigned long width;
+            unsigned long height;
+
+            // Optional: rotation of ROI (0 if not rotated)
+            double rotation_radians;
+
+            // Is this ROI active?
+            boolean do_rectify;
+        };
+
+        // Multi-level nested: Camera calibration
+        
+        struct CameraIntrinsics {
+            // Camera matrix (3x3)
+            double k[3][3];
+
+            // Distortion coefficients (k1, k2, p1, p2, k3)
+            double d[5];
+
+            // Image dimensions
+            unsigned long width;
+            unsigned long height;
+        };
+
+        
+        struct CameraExtrinsics {
+            // Rotation matrix (3x3)
+            double r[3][3];
+
+            // Translation vector
+            double t[3];
+
+            // Reference frame
+            string frame_id;
+        };
+
+        // Complete camera calibration (nested)
+        
+        struct CameraCalibration {
+            string camera_name;
+            Timestamp calibration_time;
+
+            // Nested structures
+            CameraIntrinsics intrinsics;
+            CameraExtrinsics extrinsics;
+
+            // Region of interest (optional cropping)
+            RegionOfInterest roi;
+
+            // Additional metadata
+            string distortion_model;    // "plumb_bob", "rational_polynomial", etc.
+        };
+
+        // Key-value pair with variant value
+        enum ValueType {
+            VAL_BOOL,
+            VAL_INT,
+            VAL_DOUBLE,
+            VAL_STRING,
+            VAL_BINARY
+        };
+
+        union VariantValue switch (ValueType) {
+            case VAL_BOOL:
+                boolean bool_val;
+            case VAL_INT:
+                long long int_val;
+            case VAL_DOUBLE:
+                double double_val;
+            case VAL_STRING:
+                string string_val;
+            case VAL_BINARY:
+                sequence<octet> binary_val;
+        };
+
+        
+        struct KeyValue {
+            string key;
+            VariantValue value;
+        };
+
+        // Metadata with arbitrary key-value pairs
+        
+        struct Metadata {
+            sequence<KeyValue> entries;
+            string source_system;
+            Timestamp creation_time;
+        };
+
+        // Complex message: Point Cloud with metadata
+        
+        struct Point3D {
+            float x;
+            float y;
+            float z;
+        };
+
+        
+        struct PointField {
+            string name;            // "x", "y", "z", "rgb", "intensity", etc.
+            unsigned long offset;   // Offset from point start
+            octet datatype;         // Type enum
+            unsigned long count;    // Number of elements
+        };
+
+        // Point cloud with full metadata
+        
+        struct PointCloud2 {
+            // Header
+            Timestamp timestamp;
+            string frame_id;
+
+            // Point structure definition
+            sequence<PointField> fields;
+            boolean is_bigendian;
+            unsigned long point_step;   // Size of a point in bytes
+            unsigned long row_step;     // Size of a row in bytes
+
+            // Actual data
+            sequence<octet> data;
+
+            // Dimensions
+            unsigned long width;    // Number of points per row
+            unsigned long height;   // Number of rows (1 for unordered)
+
+            // Is the cloud dense (no invalid points)?
+            boolean is_dense;
+
+            // Optional metadata
+            Metadata metadata;
+        };
+
+        // Hierarchical device information
+        
+        struct DeviceCapability {
+            string name;
+            VariantValue value;
+            string unit;            // e.g., "Hz", "m/s", "degrees"
+            VariantValue min_val;
+            VariantValue max_val;
+        };
+
+        
+        struct SubDevice {
+            string device_id;
+            string device_type;
+            sequence<DeviceCapability> capabilities;
+            boolean is_online;
+        };
+
+        
+        struct DeviceInfo {
+            string device_name;
+            string hardware_version;
+            string firmware_version;
+            string serial_number;
+
+            // Nested: device contains sub-devices
+            sequence<SubDevice> sub_devices;
+
+            // Device status
+            boolean is_operational;
+            float health_score;     // 0.0 to 1.0
+
+            // Arbitrary properties
+            Metadata properties;
+        };
+
+        // Complex telemetry message
+        
+        struct TelemetryPacket {
+            // Packet header
+            unsigned long packet_id;
+            Timestamp send_time;
+            Timestamp receive_time;
+
+            // Source device
+            DeviceInfo source_device;
+
+            // Multiple data streams
+            sequence<VariantValue> measurements;
+
+            // Sequence of nested transforms
+            sequence<Transform3D> transform_chain;
+
+            // Raw sensor data (optional)
+            sequence<octet> raw_payload;
+
+            // Packet metadata
+            Metadata packet_metadata;
+        };
+
+    };
+};
