@@ -87,6 +87,24 @@ tar -xzf cddsctl-*.tar.gz
 
 ### 源码构建
 
+#### 系统依赖
+
+安装必要的系统依赖：
+
+```bash
+# Ubuntu/Debian
+sudo apt-get update
+sudo apt-get install -y cmake g++ ninja-build git libacl1-dev
+
+# RHEL/CentOS/Fedora
+sudo yum install -y cmake gcc-c++ ninja-build git libacl-devel
+
+# Arch Linux
+sudo pacman -S cmake gcc ninja git acl
+```
+
+#### 构建
+
 ```bash
 git clone https://github.com/int0x7/cddsctl.git
 cd cddsctl
@@ -111,6 +129,16 @@ cd cddsctl
 ```
 ./build/cli/cddsctl
 ```
+
+### 版本兼容性
+
+cddsctl 需要 **CycloneDDS 0.10.1+** 版本，因为它依赖 `dds_typeinfo_t` API 进行 XTypes 类型自省。
+
+| CycloneDDS 版本 | 支持状态 | 说明 |
+|----------------|---------|------|
+| 0.9.0 / 0.9.1 | ❌ 不支持 | 缺少 `dds_typeinfo_t` API |
+| 0.10.1 - 0.10.5 | ✅ 完全支持 | 完整 API 兼容性 |
+| 11.0.0 | ⚠️ 部分支持 | cddsctl 可构建；publisher 构建可能需要 iceoryx 版本对齐 |
 
 ---
 

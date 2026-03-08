@@ -11,9 +11,18 @@ The version compatibility test framework verifies that:
 ## Supported Versions
 
 Currently supported CycloneDDS versions for testing:
-- 0.10.2
-- 0.10.3
-- 0.10.5
+- 0.10.1, 0.10.2, 0.10.3, 0.10.4, 0.10.5
+- 11.0.0
+
+### Version Support Notes
+
+| Version Range | Support Status | Reason |
+|--------------|----------------|--------|
+| 0.9.x | ❌ Not supported | cddsctl requires `dds_typeinfo_t` API which was introduced in 0.10.1 |
+| 0.10.1+ | ✅ Fully supported | Full API compatibility with cddsctl |
+| 11.0.0 | ⚠️ Partial support | cddsctl builds successfully; publisher build may require iceoryx version alignment |
+
+**Note:** 0.10.1 through 0.10.5 are all patch versions in the 0.10.x series and maintain wire-protocol compatibility.
 
 ## Test Scripts
 
@@ -119,8 +128,8 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        tool_version: ['0.10.2', '0.10.5']
-        pub_version: ['0.10.2', '0.10.5']
+        tool_version: ['0.10.2', '0.10.3', '0.10.5', '11.0.0']
+        pub_version: ['0.10.2', '0.10.3', '0.10.5', '11.0.0']
 
     steps:
     - uses: actions/checkout@v4
@@ -166,13 +175,17 @@ jobs:
 ## Expected Results
 
 ### Same Version (Expected: PASS)
-- cddsctl 0.10.2 + publisher 0.10.2 ✓
-- cddsctl 0.10.5 + publisher 0.10.5 ✓
+- cddsctl 0.10.x + publisher 0.10.x ✓ (within patch versions)
+- cddsctl 11.0.0 + publisher 11.0.0 ✓
 
-### Cross Version (Depends on ABI compatibility)
-- cddsctl 0.10.2 + publisher 0.10.3 (likely ✓ - patch version)
-- cddsctl 0.10.2 + publisher 0.10.5 (check wire protocol compatibility)
-- cddsctl 0.10.5 + publisher 0.10.2 (check backward compatibility)
+### Cross Version (Within 0.10.x series)
+All 0.10.x versions (0.10.1 through 0.10.5) are wire-protocol compatible:
+- cddsctl 0.10.2 + publisher 0.10.5 ✓
+- cddsctl 0.10.5 + publisher 0.10.1 ✓
+
+### Cross Version (Major version differences)
+- cddsctl 0.10.x + publisher 11.0.0 (test required)
+- cddsctl 11.0.0 + publisher 0.10.x (test required)
 
 ## Troubleshooting
 
@@ -220,7 +233,10 @@ To add support for a new CycloneDDS version (e.g., 0.10.6):
 
 1. Update `SUPPORTED_VERSIONS` in `test_version_compat.py`:
 ```python
-SUPPORTED_VERSIONS = ["0.10.2", "0.10.3", "0.10.5", "0.10.6"]
+SUPPORTED_VERSIONS = [
+    "0.10.1", "0.10.2", "0.10.3", "0.10.4", "0.10.5",
+    "11.0.0"
+]
 ```
 
 2. Check if other dependency versions need updates

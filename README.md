@@ -91,6 +91,24 @@ The release binary is built with CycloneDDS 0.10.2 and iceoryx 2.0.5. Shared mem
 
 ### Build from Source
 
+#### Prerequisites
+
+Install system dependencies:
+
+```bash
+# Ubuntu/Debian
+sudo apt-get update
+sudo apt-get install -y cmake g++ ninja-build git libacl1-dev
+
+# RHEL/CentOS/Fedora
+sudo yum install -y cmake gcc-c++ ninja-build git libacl-devel
+
+# Arch Linux
+sudo pacman -S cmake gcc ninja git acl
+```
+
+#### Build
+
 ```bash
 git clone https://github.com/int0x7/cddsctl.git
 cd cddsctl
@@ -115,6 +133,16 @@ After building, the binary will be available:
 ```
 ./build/cli/cddsctl
 ```
+
+### Version Compatibility
+
+cddsctl requires **CycloneDDS 0.10.1+** due to its dependency on the `dds_typeinfo_t` API for XTypes introspection.
+
+| CycloneDDS Version | Support Status | Notes |
+|-------------------|----------------|-------|
+| 0.9.0 / 0.9.1 | ❌ Not supported | Missing `dds_typeinfo_t` API |
+| 0.10.1 - 0.10.5 | ✅ Fully supported | Full API compatibility |
+| 11.0.0 | ⚠️ Partial support | cddsctl builds; publisher builds may need iceoryx alignment |
 
 ---
 
