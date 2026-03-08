@@ -228,7 +228,7 @@ build_publisher() {
 
     # Generate types from IDL
     "${install_prefix}/cyclonedds/bin/idlc" -x cxx \
-        "${PROJECT_ROOT}/examples/TestTypes.idl" \
+        "${PROJECT_ROOT}/examples/idl/TestTypes.idl" \
         -o . 2>&1 | tail -5
 
     # Compile publisher

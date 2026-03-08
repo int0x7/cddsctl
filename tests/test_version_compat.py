@@ -318,7 +318,7 @@ target_link_libraries(test_publisher PRIVATE
 
             # Copy necessary files
             import shutil
-            shutil.copy(self.examples_dir / "TestTypes.idl", build_dir)
+            shutil.copy(self.examples_dir / "idl" / "TestTypes.idl", build_dir)
             shutil.copy(self.examples_dir / "test_publisher.cpp", build_dir)
 
             # Configure and build
