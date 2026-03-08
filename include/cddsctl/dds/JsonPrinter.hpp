@@ -21,7 +21,8 @@ public:
         const uint8_t* cdr_data,
         size_t cdr_len,
         const dds_topic_descriptor_t* descriptor,
-        uint32_t xcdr_version = CDR_ENC_VERSION_2);
+        uint32_t xcdr_version = CDR_ENC_VERSION_2,
+        const char* type_name = nullptr);
 
     static bool is_available(const dds_topic_descriptor_t* descriptor);
 };
