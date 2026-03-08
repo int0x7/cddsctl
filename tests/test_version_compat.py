@@ -27,24 +27,45 @@ import tempfile
 import time
 import json
 from pathlib import Path
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Dict, Any
 
 
 class VersionCompatTest:
     """Version compatibility test runner."""
-
-    # Supported CycloneDDS versions for testing
-    SUPPORTED_VERSIONS = ["0.10.2", "0.10.3", "0.10.5"]
-
-    # Fixed versions for other dependencies
-    ICEORYX_VERSION = "2.0.5"
-    YAMLCPP_VERSION = "0.8.0"
 
     def __init__(self, project_root: Path, build_base: Path):
         self.project_root = project_root
         self.build_base = build_base
         self.tests_dir = project_root / "tests"
         self.examples_dir = project_root / "examples"
+
+        # Load configuration from YAML
+        self.config = self._load_config()
+        self.SUPPORTED_VERSIONS = self.config["cyclonedds_versions"]
+        self.ICEORYX_VERSION = self.config["dependency_versions"]["iceoryx"]
+        self.YAMLCPP_VERSION = self.config["dependency_versions"]["yaml_cpp"]
+
+    def _load_config(self) -> Dict[str, Any]:
+        """Load version configuration from YAML file."""
+        config_file = self.tests_dir / "version_compat_config.yaml"
+
+        try:
+            import yaml
+        except ImportError:
+            print("Error: PyYAML is required. Install it with: pip3 install pyyaml", file=sys.stderr)
+            sys.exit(2)
+
+        if not config_file.exists():
+            print(f"Error: Configuration file not found: {config_file}", file=sys.stderr)
+            sys.exit(2)
+
+        try:
+            with open(config_file, 'r') as f:
+                config = yaml.safe_load(f)
+            return config
+        except Exception as e:
+            print(f"Error: Failed to parse configuration file: {e}", file=sys.stderr)
+            sys.exit(2)
 
     def log(self, message: str, level: str = "INFO"):
         """Print formatted log message."""
@@ -440,7 +461,9 @@ target_link_libraries(test_publisher PRIVATE
 
         topic = "/compat_test_record"
         # Output to build directory, record command appends .mcap extension
-        output_file = self.build_base / f"test_record_{domain}.mcap"
+        # So we specify name without extension, cddsctl adds .mcap
+        output_prefix = self.build_base / f"test_record_{domain}"
+        output_file = Path(f"{output_prefix}.mcap")  # cddsctl adds .mcap to the prefix
 
         # Clean up any existing file
         if output_file.exists():
@@ -463,11 +486,11 @@ target_link_libraries(test_publisher PRIVATE
             self.log("Waiting for publisher to start (2s)...")
             time.sleep(2)
 
-            # Run record command
-            self.log(f"Running: cddsctl record {topic} -O {output_file} --duration=5 --domain {domain}")
+            # Run record command (use prefix without .mcap, cddsctl adds it)
+            self.log(f"Running: cddsctl record {topic} -O {output_prefix} --duration=5 --domain {domain}")
             record_cmd = [
                 str(cddsctl), "record", topic,
-                "-O", str(output_file),
+                "-O", str(output_prefix),
                 "--duration", "5",
                 "--domain", str(domain)
             ]

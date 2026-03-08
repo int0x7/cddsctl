@@ -18,6 +18,48 @@ set -e
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TESTS_DIR="${PROJECT_ROOT}/tests"
 BUILD_BASE="${PROJECT_ROOT}/build_compat_test"
+CONFIG_FILE="${TESTS_DIR}/version_compat_config.yaml"
+
+# Helper function to read YAML values using Python
+yaml_get() {
+    local key="$1"
+    python3 -c "
+import yaml
+import sys
+try:
+    with open('$CONFIG_FILE', 'r') as f:
+        config = yaml.safe_load(f)
+    keys = '$key'.split('.')
+    value = config
+    for k in keys:
+        value = value[k]
+    if isinstance(value, list):
+        print(' '.join(str(x) for x in value))
+    else:
+        print(value)
+except Exception as e:
+    sys.stderr.write(f'Error reading config: {e}\\n')
+    sys.exit(1)
+"
+}
+
+# Load versions from config file
+if [[ ! -f "$CONFIG_FILE" ]]; then
+    echo "Error: Configuration file not found: $CONFIG_FILE"
+    exit 2
+fi
+
+# Check if PyYAML is available
+if ! python3 -c "import yaml" 2>/dev/null; then
+    echo "Error: PyYAML is required. Install it with: pip3 install pyyaml"
+    exit 2
+fi
+
+SUPPORTED_VERSIONS=$(yaml_get "cyclonedds_versions")
+ICEORYX_VERSION=$(yaml_get "dependency_versions.iceoryx")
+YAMLCPP_VERSION=$(yaml_get "dependency_versions.yaml_cpp")
+MIN_VERSION=$(yaml_get "notes.min_version")
+VERSION_REASON=$(yaml_get "notes.reason")
 
 # Parse arguments
 TOOL_VERSION="${1:-}"
@@ -31,9 +73,13 @@ if [[ -z "$TOOL_VERSION" || -z "$PUB_VERSION" ]]; then
     echo "  (Tests cddsctl 0.10.2 against publisher 0.10.5)"
     echo ""
     echo "Supported versions:"
-    echo "  - 0.10.2"
-    echo "  - 0.10.3"
-    echo "  - 0.10.5"
+    for v in $SUPPORTED_VERSIONS; do
+        echo "  - $v"
+    done
+    echo ""
+    echo "Notes:"
+    echo "  - 0.9.x is NOT supported (cddsctl requires dds_typeinfo_t API from 0.10.1+)"
+    echo "  - 11.0.0 requires cddsctl built with compatible iceoryx version"
     exit 1
 fi
 
@@ -68,7 +114,7 @@ build_deps_for_version() {
     if [[ ! -f "${install_prefix}/iceoryx/lib/libiceoryx_posh.a" ]]; then
         echo "    Building iceoryx..."
         if [[ ! -d "iceoryx" ]]; then
-            git clone --depth 1 --branch v2.0.5 \
+            git clone --depth 1 --branch v${ICEORYX_VERSION} \
                 https://github.com/eclipse-iceoryx/iceoryx.git
         fi
         cmake -S iceoryx/iceoryx_meta -B iceoryx_build \
@@ -88,7 +134,7 @@ build_deps_for_version() {
     if [[ ! -f "${install_prefix}/yaml-cpp/lib/libyaml-cpp.a" ]]; then
         echo "    Building yaml-cpp..."
         if [[ ! -d "yaml-cpp" ]]; then
-            git clone --depth 1 --branch 0.8.0 \
+            git clone --depth 1 --branch ${YAMLCPP_VERSION} \
                 https://github.com/jbeder/yaml-cpp.git
         fi
         cmake -S yaml-cpp -B yaml-cpp_build \
