@@ -439,8 +439,8 @@ target_link_libraries(test_publisher PRIVATE
         self.log("Testing record command (record 10 messages to MCAP)")
 
         topic = "/compat_test_record"
-        # Record command appends .mcap to the filename, resulting in .mcap.mcap
-        output_file = Path(f"test_record_{domain}.mcap.mcap")
+        # Output to build directory, record command appends .mcap extension
+        output_file = self.build_base / f"test_record_{domain}.mcap"
 
         # Clean up any existing file
         if output_file.exists():
