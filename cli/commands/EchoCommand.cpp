@@ -80,11 +80,13 @@ const option::Descriptor usage[] = {
  * @param show_timestamp Whether to show timestamp for each message
  * @param descriptor Topic descriptor for formatted output (optional)
  * @param format Output format (YAML, JSON, or RAW)
+ * @param type_name Type name for identifying the main struct (optional)
  * @return Number of samples printed
  */
 size_t take_and_print(dds_entity_t reader, bool show_timestamp,
                       const dds_topic_descriptor_t* descriptor,
-                      OutputFormat format) {
+                      OutputFormat format,
+                      const char* type_name = nullptr) {
     constexpr size_t MAX_SAMPLES = 32;
     dds_sample_info_t infos[MAX_SAMPLES];
     struct ddsi_serdata* serdatas[MAX_SAMPLES];
@@ -175,7 +177,7 @@ size_t take_and_print(dds_entity_t reader, bool show_timestamp,
                 bool printed_json = false;
                 if (dds::JsonPrinter::is_available(descriptor)) {
                     std::string json_str = dds::JsonPrinter::format(
-                        cdr_data + 4, cdr_len - 4, descriptor, xcdr_version);
+                        cdr_data + 4, cdr_len - 4, descriptor, xcdr_version, type_name);
                     if (!json_str.empty()) {
                         std::cout << json_str;
                         printed_json = true;
@@ -189,7 +191,7 @@ size_t take_and_print(dds_entity_t reader, bool show_timestamp,
                 bool printed_yaml = false;
                 if (dds::YamlPrinter::is_available(descriptor)) {
                     std::string yaml = dds::YamlPrinter::format(
-                        cdr_data + 4, cdr_len - 4, descriptor, xcdr_version);
+                        cdr_data + 4, cdr_len - 4, descriptor, xcdr_version, type_name);
                     if (!yaml.empty()) {
                         std::cout << yaml;
                         printed_yaml = true;
@@ -326,6 +328,7 @@ int EchoCommand::execute(int argc, char* argv[]) {
     std::mutex reader_mutex;
     std::unique_ptr<dds::RawDataReader> reader;
     dds_topic_descriptor_t* topic_descriptor = nullptr;
+    std::string discovered_type_name;
     bool topic_found = false;
 
     // Create topic discovery
@@ -358,6 +361,7 @@ int EchoCommand::execute(int argc, char* argv[]) {
             reader = std::make_unique<dds::RawDataReader>(participant, cfg);
             if (reader && reader->is_valid()) {
                 topic_found = true;
+                discovered_type_name = ep.type_name;  // Store type name for YAML formatting
             } else {
                 reader.reset();
             }
@@ -400,7 +404,8 @@ int EchoCommand::execute(int argc, char* argv[]) {
         {
             std::lock_guard<std::mutex> lock(reader_mutex);
             if (reader && reader->is_valid()) {
-                size_t samples = take_and_print(reader->handle(), show_timestamp, topic_descriptor, output_format);
+                size_t samples = take_and_print(reader->handle(), show_timestamp,
+                    topic_descriptor, output_format, discovered_type_name.c_str());
                 printed_count += samples;
             }
         }
