@@ -107,7 +107,30 @@ inline const DDS_XTypes_CompleteEnumeratedType* find_enum_by_hash(
     return nullptr;
 }
 
+// Find union type by equivalence hash in TypeMapping
+inline const DDS_XTypes_CompleteUnionType* find_union_by_hash(
+    const DDS_XTypes_EquivalenceHash& hash,
+    const DDS_XTypes_TypeMapping& mapping)
+{
+    const auto& complete_pairs = mapping.identifier_object_pair_complete;
+    for (uint32_t i = 0; i < complete_pairs._length; ++i) {
+        const auto& pair = complete_pairs._buffer[i];
+        if (pair.type_identifier._d == DDS_XTypes_EK_COMPLETE) {
+            if (memcmp(pair.type_identifier._u.equivalence_hash, hash,
+                       sizeof(DDS_XTypes_EquivalenceHash)) == 0) {
+                const auto& type_obj = pair.type_object;
+                if (type_obj._d == DDS_XTypes_EK_COMPLETE &&
+                    type_obj._u.complete._d == DDS_XTypes_TK_UNION) {
+                    return &type_obj._u.complete._u.union_type;
+                }
+            }
+        }
+    }
+    return nullptr;
+}
+
 // Find the main struct type in TypeMapping (last struct = top-level type)
+// DEPRECATED: Use find_struct_by_type_name instead for reliable lookup
 inline const DDS_XTypes_CompleteStructType* find_main_struct(
     const DDS_XTypes_TypeMapping& mapping)
 {
@@ -118,6 +141,31 @@ inline const DDS_XTypes_CompleteStructType* find_main_struct(
         if (type_obj._d == DDS_XTypes_EK_COMPLETE &&
             type_obj._u.complete._d == DDS_XTypes_TK_STRUCTURE) {
             return &type_obj._u.complete._u.struct_type;
+        }
+    }
+    return nullptr;
+}
+
+// Find struct type by its fully qualified type name (e.g., "demo::robotics::RobotState")
+inline const DDS_XTypes_CompleteStructType* find_struct_by_type_name(
+    const std::string& type_name,
+    const DDS_XTypes_TypeMapping& mapping)
+{
+    const auto& complete_pairs = mapping.identifier_object_pair_complete;
+    for (uint32_t i = 0; i < complete_pairs._length; ++i) {
+        const auto& pair = complete_pairs._buffer[i];
+        const auto& type_obj = pair.type_object;
+
+        if (type_obj._d != DDS_XTypes_EK_COMPLETE) continue;
+        const auto& complete = type_obj._u.complete;
+        if (complete._d != DDS_XTypes_TK_STRUCTURE) continue;
+
+        const auto& struct_type = complete._u.struct_type;
+        const char* name = struct_type.header.detail.type_name;
+        if (!name || name[0] == '\0') continue;
+
+        if (std::string(name) == type_name) {
+            return &struct_type;
         }
     }
     return nullptr;

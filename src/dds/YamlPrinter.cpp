@@ -27,6 +27,13 @@ void format_struct_members(
     const DDS_XTypes_TypeMapping& mapping,
     int indent);
 
+void format_union(
+    std::ostream& os,
+    dds_istream_t& is,
+    const DDS_XTypes_CompleteUnionType& union_type,
+    const DDS_XTypes_TypeMapping& mapping,
+    int indent);
+
 // Output indentation
 void print_indent(std::ostream& os, int level) {
     for (int i = 0; i < level; ++i) {
@@ -265,14 +272,20 @@ void format_value(
                 bool found = false;
                 for (uint32_t i = 0; i < literals._length; ++i) {
                     if (literals._buffer[i].common.value == enum_val) {
-                        os << literals._buffer[i].detail.name << "\n";
+                        os << " " << literals._buffer[i].detail.name << "\n";
                         found = true;
                         break;
                     }
                 }
                 if (!found) {
-                    os << enum_val << "\n";
+                    os << " " << enum_val << "\n";
                 }
+                break;
+            }
+
+            const auto* union_type = find_union_by_hash(hash, mapping);
+            if (union_type) {
+                format_union(os, is, *union_type, mapping, indent);
                 break;
             }
 
@@ -287,6 +300,71 @@ void format_value(
         default:
             os << "<unknown_type:" << static_cast<int>(type_id._d) << ">\n";
             break;
+    }
+}
+
+// Format union value
+void format_union(
+    std::ostream& os,
+    dds_istream_t& is,
+    const DDS_XTypes_CompleteUnionType& union_type,
+    const DDS_XTypes_TypeMapping& mapping,
+    int indent)
+{
+    // Read discriminator value
+    const auto& disc = union_type.discriminator;
+    int32_t disc_val = 0;
+
+    // Determine discriminator type and read value
+    uint8_t disc_type = disc.common.type_id._d;
+    if (disc_type >= DDS_XTypes_TK_BOOLEAN && disc_type <= DDS_XTypes_TK_INT64) {
+        // Boolean, byte, char, short, long, long long
+        disc_val = static_cast<int32_t>(read_primitive<int64_t>(is));
+    } else if (disc_type >= DDS_XTypes_TK_UINT16 && disc_type <= DDS_XTypes_TK_UINT64) {
+        // Unsigned types
+        disc_val = static_cast<int32_t>(read_primitive<uint64_t>(is));
+    } else if (disc_type == DDS_XTypes_TK_INT32 || disc_type == DDS_XTypes_TK_UINT32) {
+        disc_val = read_primitive<int32_t>(is);
+    } else {
+        // For enums and other types, read as int32
+        disc_val = read_primitive<int32_t>(is);
+    }
+
+    os << "\n";
+    print_indent(os, indent);
+    os << "_d: " << disc_val << "\n";
+
+    // Find and format the active member based on discriminator value
+    const auto& members = union_type.member_seq;
+    bool found = false;
+
+    for (uint32_t i = 0; i < members._length && !found; ++i) {
+        const auto& member = members._buffer[i];
+        const auto& labels = member.common.label_seq;
+
+        // Check if this member matches the discriminator value
+        for (uint32_t j = 0; j < labels._length; ++j) {
+            if (labels._buffer[j] == disc_val) {
+                print_indent(os, indent);
+                os << member.detail.name << ":";
+
+                const auto& member_type = member.common.type_id;
+                if (is_primitive_type(member_type._d) ||
+                    member_type._d == DDS_XTypes_TK_STRING8 ||
+                    member_type._d == DDS_XTypes_TI_STRING8_SMALL ||
+                    member_type._d == DDS_XTypes_TI_STRING8_LARGE) {
+                    os << " ";
+                }
+                format_value(os, is, member_type, mapping, indent + 1);
+                found = true;
+                break;
+            }
+        }
+    }
+
+    if (!found) {
+        print_indent(os, indent);
+        os << "<unknown discriminator: " << disc_val << ">\n";
     }
 }
 
@@ -333,7 +411,8 @@ std::string YamlPrinter::format(
     const uint8_t* cdr_data,
     size_t cdr_len,
     const dds_topic_descriptor_t* descriptor,
-    uint32_t xcdr_version)
+    uint32_t xcdr_version,
+    const char* type_name)
 {
     if (!cdr_data || cdr_len == 0 || !is_available(descriptor)) {
         return "";
@@ -344,7 +423,15 @@ std::string YamlPrinter::format(
         return "";
     }
 
-    const auto* main_struct = find_main_struct(*mapping);
+    // Find the main struct - prefer type name lookup if provided
+    const DDS_XTypes_CompleteStructType* main_struct = nullptr;
+    if (type_name && type_name[0] != '\0') {
+        main_struct = find_struct_by_type_name(type_name, *mapping);
+    }
+    // Fallback to heuristic if type name not provided or not found
+    if (!main_struct) {
+        main_struct = find_main_struct(*mapping);
+    }
     if (!main_struct) {
         dds_sample_free(mapping, &DDS_XTypes_TypeMapping_desc, DDS_FREE_ALL);
         return "";

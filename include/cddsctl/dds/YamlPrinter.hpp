@@ -23,17 +23,23 @@ public:
      * @param cdr_len Length of CDR data
      * @param descriptor Topic descriptor containing type_mapping
      * @param xcdr_version CDR encoding version (CDR_ENC_VERSION_1 or CDR_ENC_VERSION_2)
+     * @param type_name Optional type name to identify the main struct (e.g., "demo::robotics::RobotState")
      * @return YAML formatted string, or empty string if formatting fails
      *
      * If the descriptor doesn't have valid type_mapping data,
      * returns an empty string and the caller should fall back to
      * compact format output.
+     *
+     * The type_name parameter should be the fully qualified type name of the
+     * top-level struct. If not provided, the function will attempt to find
+     * the main struct by heuristics which may fail for complex nested types.
      */
     static std::string format(
         const uint8_t* cdr_data,
         size_t cdr_len,
         const dds_topic_descriptor_t* descriptor,
-        uint32_t xcdr_version = CDR_ENC_VERSION_2);
+        uint32_t xcdr_version = CDR_ENC_VERSION_2,
+        const char* type_name = nullptr);
 
     /**
      * @brief Check if YAML formatting is available for a descriptor
