@@ -20,7 +20,7 @@ $ cddsctl --help
   ║   Cyclone DDS Command Line Tool          ║
   ╚══════════════════════════════════════════╝
 
-  Version: 1.0.0
+  Version: 1.0.0 (with SHM)
 
   Usage: cddsctl <command> [options]
 
@@ -29,6 +29,7 @@ $ cddsctl --help
     list      List available DDS topics
     echo      Print messages from a DDS topic
     record    Record DDS topics to MCAP file
+    ps        Show DDS participants and applications
 
   Run 'cddsctl <command> --help' for more information.
 ```
@@ -36,8 +37,11 @@ $ cddsctl --help
 核心功能：
 
 - `list`：查看 DDS 网络中发现的 topic 列表
-- `echo`：实时打印指定 topic 的消息内容
+- `echo`：实时打印指定 topic 的消息内容（支持 YAML/JSON 格式）
 - `record`：将指定 topic 记录为 **MCAP** 文件
+- **XTypes 类型自省**：无需 IDL 编译即可自动发现类型
+- **共享内存**：通过 iceoryx 实现零拷贝（自动回退到 UDP）
+- **复杂类型**：嵌套结构体、数组、序列、联合体、枚举
 
 ---
 
@@ -81,9 +85,12 @@ $ cddsctl --help
 从 [Releases](https://github.com/int0x7/cddsctl/releases) 下载预编译二进制：
 
 ```bash
-tar -xzf cddsctl-*.tar.gz
-./cddsctl-*/bin/cddsctl --help
+tar -xzf cddsctl-*-linux-x86_64.tar.gz
+sudo mv cddsctl-*/bin/cddsctl /usr/local/bin/
+cddsctl --help
 ```
+
+发布版本使用 CycloneDDS 0.10.2 和 iceoryx 2.0.5 构建。当兼容的 RouDi (iceoryx 2.0.5) 守护进程运行时，会自动使用共享内存传输；否则会回退到 UDP 网络传输。
 
 ### 源码构建
 
@@ -204,6 +211,7 @@ cddsctl echo <topic> [options]
 - `-n, --count=N`：打印 N 条消息后退出
 - `-d, --domain=ID`：指定 DDS domain ID（默认：0）
 - `-t, --timeout=SEC`：topic 发现超时时间（默认：2.0 秒）
+- `-F, --format=FMT`：输出格式：yaml、json（默认：yaml）
 - `--no-timestamp`：不显示时间戳
 
 示例：
@@ -226,6 +234,39 @@ values:
 name: sensor_1
 ```
 
+支持嵌套结构和联合体：
+
+```yaml
+---
+[1772968360.232262]
+timestamp_sec: 1772968360
+base_pose:
+  position:
+    x: 0.198669
+    y: 0.980066
+    z: 0
+  orientation:
+    x: 0
+    y: 0
+    z: 0.099833
+    w: 0.995004
+result:
+  _d: 0
+  success: true
+```
+
+JSON 格式 (`-F json`)：
+
+```json
+{
+  "base_pose": {
+    "position": { "x": 0.198669, "y": 0.980066, "z": 0 },
+    "orientation": { "x": 0, "y": 0, "z": 0.099833, "w": 0.995004 }
+  },
+  "overall_status": "STATUS_OK"
+}
+```
+
 ---
 
 ### record
@@ -240,6 +281,34 @@ cddsctl record <topic...> -o <file.mcap>
 
 ```bash
 cddsctl record MotorState -o motor.mcap
+```
+
+---
+
+## IDL 示例
+
+本仓库包含全面的 IDL 示例用于测试：
+
+| 示例 | 类型 | 说明 |
+|---------|-------|-------------|
+| `NestedStruct` | 结构体 | 层级结构（Vector3 → Pose → RobotState）|
+| `ArraysAndSequences` | 数组、序列 | 固定数组、有界/无界序列 |
+| `Enumeration` | 枚举 | 状态/模式的类型安全命名常量 |
+| `UnionType` | 联合体 | 用于变体数据的判别式联合体 |
+| `VariousTypes` | 基本类型 | 所有 DDS 基本类型 |
+| `AdvancedFeatures` | 复杂类型 | 联合体和序列的深度嵌套 |
+
+运行示例：
+
+```bash
+# 终端 1: 启动 publisher
+./build/examples/nested_struct_publisher --topic /robot/state
+
+# 终端 2: YAML 格式输出
+./build/cli/cddsctl echo /robot/state -n 10
+
+# 终端 2: JSON 格式输出
+./build/cli/cddsctl echo /robot/state -n 10 --format json
 ```
 
 ---
