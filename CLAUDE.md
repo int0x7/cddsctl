@@ -39,8 +39,17 @@ cmake --build build -j
 ./build/cli/cddsctl echo /test/sensor -n 5
 ./build/cli/cddsctl record /test/sensor -o log.mcap
 
-# Run test publisher (for testing echo/record)
+# Run test publishers (for testing echo/record)
 ./build/examples/test_publisher --topic /test/sensor --rate 10
+./build/examples/nested_struct_publisher --topic /robot/state --rate 1
+./build/examples/union_publisher --topic /command/response --rate 1
+
+# Run IDL tests
+./build/tests/idl_basic_tests
+./build/tests/idl_yaml_tests
+
+# Run integration tests
+./tests/integration/test_idl_integration.sh
 
 # Run version compatibility tests
 python3 tests/test_version_compat.py 0.10.2 0.10.5  # Test cddsctl 0.10.2 with publisher 0.10.5
@@ -54,8 +63,8 @@ python3 tests/test_version_compat.py --test-all      # Test all version combinat
 - `include/cddsctl/` - Public headers (mirrors namespace structure: `core/`, `dds/`, `cli/`, `record/`)
 - `src/` - Library implementations (three static libs: `cddsctl_core`, `cddsctl_dds`, `cddsctl_recorder`)
 - `cli/` - CLI binary and subcommand implementations (`cli/commands/`)
-- `tests/` - Catch2 unit tests
-- `examples/` - Test publisher for manual testing
+- `tests/` - Catch2 unit tests (`tests/idl/` for IDL tests)
+- `examples/` - Test publishers (`examples/idl/` for IDL definitions)
 - `3rd_party/` - Header-only libs (mcap, nlohmann-json, spdlog, optionparser, catch2) and built deps
 
 ### Library Dependency Chain
@@ -75,16 +84,34 @@ cddsctl_core  ->  cddsctl_dds  ->  cddsctl_recorder  ->  cddsctl (CLI)
 | `TopicDiscovery` | dds/ | Monitors DCPSPublication/Subscription builtin topics |
 | `RawDataReader` | dds/ | Extracts CDR data via `dds_takecdr()`, handles iceoryx SHM |
 | `TypeSupport` | dds/ | XTypes introspection, generates IDL from TypeMapping |
-| `YamlPrinter` | dds/ | Formats CDR data as YAML using XTypes TypeMapping |
+| `YamlPrinter` | dds/ | Formats CDR data as YAML (supports nested structs, unions, enums) |
+| `JsonPrinter` | dds/ | Formats CDR data as JSON (supports nested structs, unions, enums) |
+| `CdrReader` | dds/ | Helper functions for CDR deserialization and type lookup |
 | `Recorder` | record/ | Orchestrates topic discovery, readers, and MCAP output |
 | `McapWriter` | record/ | Writes schemas, channels, and messages to MCAP |
 
 ### Namespaces
 
 - `cddsctl::core` - Types, Config, Log
-- `cddsctl::dds` - DDS abstraction
+- `cddsctl::dds` - DDS abstraction (XTypes introspection, CDR parsing)
 - `cddsctl::recorder` - Recording functionality
 - `cddsctl::cli` - CLI commands
+
+### IDL Type Support
+
+cddsctl supports all OMG IDL 4.2 types via XTypes introspection:
+
+| Category | Supported Types |
+|----------|-----------------|
+| Primitives | boolean, byte, char, short, long, long long, float, double |
+| Strings | string (unbounded/bounded) |
+| Structs | Nested structs with arbitrary depth |
+| Arrays | Fixed-size arrays (e.g., `double[3][3]`) |
+| Sequences | Unbounded/bounded sequences |
+| Unions | Discriminated unions with enum/integer discriminator |
+| Enums | Enumeration types with named values |
+
+Type discovery is automatic via DDS XTypes - no IDL compilation needed for cddsctl.
 
 ### Adding New Commands
 

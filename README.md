@@ -37,8 +37,11 @@ $ cddsctl --help
 Core Features:
 
 - `list`: List discovered topics in DDS network
-- `echo`: Print messages from a topic in real-time
+- `echo`: Print messages from a topic in real-time (YAML/JSON format)
 - `record`: Record topics to **MCAP** files
+- **XTypes introspection**: Auto-discover types without IDL compilation
+- **Shared memory**: Zero-copy via iceoryx (automatic fallback to UDP)
+- **Complex types**: Nested structs, arrays, sequences, unions, enums
 
 ---
 
@@ -208,6 +211,7 @@ Options:
 - `-n, --count=N`: Exit after printing N messages
 - `-d, --domain=ID`: DDS domain ID (default: 0)
 - `-t, --timeout=SEC`: Topic discovery timeout in seconds (default: 2.0)
+- `-F, --format=FMT`: Output format: yaml, json (default: yaml)
 - `--no-timestamp`: Don't show timestamps
 
 Example:
@@ -230,6 +234,39 @@ values:
 name: sensor_1
 ```
 
+Nested structures and unions are fully supported:
+
+```yaml
+---
+[1772968360.232262]
+timestamp_sec: 1772968360
+base_pose:
+  position:
+    x: 0.198669
+    y: 0.980066
+    z: 0
+  orientation:
+    x: 0
+    y: 0
+    z: 0.099833
+    w: 0.995004
+result:
+  _d: 0
+  success: true
+```
+
+JSON format (`-F json`):
+
+```json
+{
+  "base_pose": {
+    "position": { "x": 0.198669, "y": 0.980066, "z": 0 },
+    "orientation": { "x": 0, "y": 0, "z": 0.099833, "w": 0.995004 }
+  },
+  "overall_status": "STATUS_OK"
+}
+```
+
 ---
 
 ### record
@@ -247,6 +284,32 @@ cddsctl record MotorState -o motor.mcap
 ```
 
 ---
+
+## IDL Examples
+
+The repository includes comprehensive IDL examples for testing:
+
+| Example | Types | Description |
+|---------|-------|-------------|
+| `NestedStruct` | Structs | Hierarchical structures (Vector3 → Pose → RobotState) |
+| `ArraysAndSequences` | Arrays, Sequences | Fixed arrays, bounded/unbounded sequences |
+| `Enumeration` | Enums | Type-safe named constants for status/modes |
+| `UnionType` | Unions | Discriminated unions for variant data |
+| `VariousTypes` | Primitives | All DDS primitive types |
+| `AdvancedFeatures` | Complex | Deep nesting with unions and sequences |
+
+Run examples:
+
+```bash
+# Terminal 1: Start publisher
+./build/examples/nested_struct_publisher --topic /robot/state
+
+# Terminal 2: Echo with YAML format
+./build/cli/cddsctl echo /robot/state -n 10
+
+# Terminal 2: Echo with JSON format
+./build/cli/cddsctl echo /robot/state -n 10 --format json
+```
 
 ## Related Projects
 
