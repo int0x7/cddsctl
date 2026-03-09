@@ -2,13 +2,16 @@
 version = 1
 
 [roudi]
-# Default shared memory segment
-shm_size = 1024000000  # ~1GB
+shm_size = 1024000000
+
+[[segment]]
+name = "iox1"
+size = 1024000000
+reader_count = 100
+writer_count = 100
 
 [monitoring]
-# Enable monitoring
 enabled = false
 
 [log]
-# Log level
 level = "warn"
