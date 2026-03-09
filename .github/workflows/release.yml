@@ -33,7 +33,6 @@ jobs:
       - name: Build
         run: |
           ./build.sh -c
-          strip build/cli/cddsctl
 
       - name: Run tests
         run: ./build/tests/cddsctl_tests
