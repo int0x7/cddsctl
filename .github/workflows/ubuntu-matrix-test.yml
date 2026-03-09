@@ -9,10 +9,17 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [ubuntu-20.04, ubuntu-22.04, ubuntu-24.04]
+        include:
+          - os: ubuntu-22.04
+            image: ubuntu:20.04
+          - os: ubuntu-22.04
+            image: ubuntu:22.04
+          - os: ubuntu-24.04
+            image: ubuntu:24.04
       fail-fast: false
 
     runs-on: ${{ matrix.os }}
+    container: ${{ matrix.image }}
 
     env:
       DEBIAN_FRONTEND: noninteractive
@@ -24,14 +31,14 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y cmake g++ ninja-build libacl1-dev git
+          apt-get update
+          apt-get install -y cmake g++ ninja-build libacl1-dev git
 
       - name: Cache dependencies
         uses: actions/cache@v4
         with:
           path: 3rd_party
-          key: deps-${{ matrix.os }}-iceoryx2.0.3-cyclonedds0.10.2
+          key: deps-${{ matrix.image }}-iceoryx2.0.3-cyclonedds0.10.2
 
       - name: Build dependencies
         run: ./scripts/build_deps.sh
@@ -106,6 +113,6 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: build-${{ matrix.os }}
+          name: build-${{ matrix.image }}
           path: build/
           retention-days: 3

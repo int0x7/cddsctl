@@ -12,8 +12,6 @@ jobs:
     container: ubuntu:20.04
     env:
       DEBIAN_FRONTEND: noninteractive
-
-    env:
       BUILD_TYPE: Release
 
     steps:
