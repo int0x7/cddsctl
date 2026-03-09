@@ -10,12 +10,26 @@ jobs:
     strategy:
       matrix:
         include:
+          # x86_64 builds
           - os: ubuntu-22.04
             image: ubuntu:20.04
+            arch: x86_64
           - os: ubuntu-22.04
             image: ubuntu:22.04
+            arch: x86_64
           - os: ubuntu-24.04
             image: ubuntu:24.04
+            arch: x86_64
+          # ARM64 builds
+          - os: ubuntu-22.04-arm
+            image: ubuntu:20.04
+            arch: aarch64
+          - os: ubuntu-22.04-arm
+            image: ubuntu:22.04
+            arch: aarch64
+          - os: ubuntu-24.04-arm
+            image: ubuntu:24.04
+            arch: aarch64
       fail-fast: false
 
     runs-on: ${{ matrix.os }}
@@ -38,7 +52,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: 3rd_party
-          key: deps-${{ matrix.image }}-iceoryx2.0.3-cyclonedds0.10.2
+          key: deps-${{ matrix.image }}-${{ matrix.arch }}-iceoryx2.0.3-cyclonedds0.10.2
 
       - name: Build dependencies
         run: ./scripts/build_deps.sh
@@ -64,7 +78,7 @@ jobs:
           echo "===== Testing Shared Memory Mode ====="
 
           # Start RouDi (iceoryx daemon)
-          ./3rd_party/iceoryx/bin/iox-roudi -c .github/workflows/config/roudi.toml &
+          ./3rd_party/iceoryx-${{ matrix.arch }}/bin/iox-roudi -c .github/workflows/config/roudi.toml &
           ROU_PID=$!
           sleep 2
 
@@ -115,6 +129,6 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: build-${{ matrix.image }}
+          name: build-${{ matrix.image }}-${{ matrix.arch }}
           path: build/
           retention-days: 3
