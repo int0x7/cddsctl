@@ -1,0 +1,77 @@
+// NestedStruct.idl
+// Demonstrates hierarchical/nested structures with deep composition
+// This IDL showcases how complex data types can be built from simpler components
+
+module demo {
+    module robotics {
+
+        // Basic 3D vector - used for position, velocity, acceleration
+        @final
+        struct Vector3 {
+            double x;
+            double y;
+            double z;
+        };
+
+        // Quaternion for 3D rotation representation
+        @final
+        struct Quaternion {
+            double x;
+            double y;
+            double z;
+            double w;
+        };
+
+        // 3D pose: position + orientation
+        @final
+        struct Pose {
+            Vector3 position;
+            Quaternion orientation;
+        };
+
+        // Twist: linear + angular velocity
+        @final
+        struct Twist {
+            Vector3 linear;
+            Vector3 angular;
+        };
+
+        // Wrench: force + torque
+        @final
+        struct Wrench {
+            Vector3 force;
+            Vector3 torque;
+        };
+
+        // Joint state for a single joint
+        @final
+        struct JointState {
+            string name;
+            double position;
+            double velocity;
+            double effort;
+        };
+
+        // Complete robot state with multiple nested structures
+        @final
+        struct RobotState {
+            // Header information
+            long long timestamp_sec;      // Seconds since epoch
+            unsigned long timestamp_nsec; // Nanoseconds fraction
+            string frame_id;              // Coordinate frame
+
+            // Base link state (deeply nested: RobotState -> Pose -> Vector3/Quaternion)
+            Pose base_pose;
+            Twist base_twist;
+            Wrench base_wrench;
+
+            // Joint states (unbounded sequence of nested structs)
+            sequence<JointState> joints;
+
+            // Operational status
+            boolean is_active;
+            octet status_code;            // Raw status byte
+        };
+
+    };
+};

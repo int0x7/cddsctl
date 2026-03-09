@@ -6,6 +6,15 @@ PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BUILD_DIR="${PROJECT_ROOT}/build"
 THIRD_PARTY="${PROJECT_ROOT}/3rd_party"
 
+# Load versions from .versions file
+VERSIONS_FILE="${PROJECT_ROOT}/.versions"
+if [[ -f "${VERSIONS_FILE}" ]]; then
+    source "${VERSIONS_FILE}"
+else
+    echo "Error: .versions file not found at ${VERSIONS_FILE}"
+    exit 1
+fi
+
 # 默认并行数
 JOBS=$(nproc 2>/dev/null || echo 4)
 
@@ -75,11 +84,11 @@ if [[ -f "${THIRD_PARTY}/iceoryx/lib/libiceoryx_posh.a" ]]; then
     ICEORYX_OK=1
 fi
 
-if [[ -f "${THIRD_PARTY}/cyclonedds-0.10.2/lib/libddsc.a" ]]; then
+if [[ -f "${THIRD_PARTY}/cyclonedds-${CYCLONEDDS_VERSION}/lib/libddsc.a" ]]; then
     CYCLONEDDS_OK=1
 fi
 
-if [[ -f "${THIRD_PARTY}/cyclonedds-cxx-0.10.2/lib/libddscxx.a" ]]; then
+if [[ -f "${THIRD_PARTY}/cyclonedds-cxx-${CYCLONEDDS_VERSION}/lib/libddscxx.a" ]]; then
     CYCLONEDDS_CXX_OK=1
 fi
 

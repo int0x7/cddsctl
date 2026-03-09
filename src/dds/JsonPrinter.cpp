@@ -24,6 +24,11 @@ json build_struct(
     const DDS_XTypes_CompleteStructType& struct_type,
     const DDS_XTypes_TypeMapping& mapping);
 
+json build_union(
+    dds_istream_t& is,
+    const DDS_XTypes_CompleteUnionType& union_type,
+    const DDS_XTypes_TypeMapping& mapping);
+
 // Build JSON from a primitive type
 json build_primitive(dds_istream_t& is, uint8_t type_kind) {
     switch (type_kind) {
@@ -180,6 +185,11 @@ json build_value(
                 return json(enum_val);
             }
 
+            const auto* union_type = find_union_by_hash(hash, mapping);
+            if (union_type) {
+                return build_union(is, *union_type, mapping);
+            }
+
             return json(nullptr);
         }
 
@@ -207,6 +217,49 @@ json build_struct(
     return obj;
 }
 
+// Build JSON object from union
+json build_union(
+    dds_istream_t& is,
+    const DDS_XTypes_CompleteUnionType& union_type,
+    const DDS_XTypes_TypeMapping& mapping)
+{
+    json obj = json::object();
+
+    // Read discriminator value
+    const auto& disc = union_type.discriminator;
+    int32_t disc_val = 0;
+
+    uint8_t disc_type = disc.common.type_id._d;
+    if (disc_type >= DDS_XTypes_TK_BOOLEAN && disc_type <= DDS_XTypes_TK_INT64) {
+        disc_val = static_cast<int32_t>(read_primitive<int64_t>(is));
+    } else if (disc_type >= DDS_XTypes_TK_UINT16 && disc_type <= DDS_XTypes_TK_UINT64) {
+        disc_val = static_cast<int32_t>(read_primitive<uint64_t>(is));
+    } else {
+        disc_val = read_primitive<int32_t>(is);
+    }
+
+    obj["_d"] = disc_val;
+
+    // Find and format the active member
+    const auto& members = union_type.member_seq;
+    bool found = false;
+
+    for (uint32_t i = 0; i < members._length && !found; ++i) {
+        const auto& member = members._buffer[i];
+        const auto& labels = member.common.label_seq;
+
+        for (uint32_t j = 0; j < labels._length; ++j) {
+            if (labels._buffer[j] == disc_val) {
+                obj[member.detail.name] = build_value(is, member.common.type_id, mapping);
+                found = true;
+                break;
+            }
+        }
+    }
+
+    return obj;
+}
+
 }  // anonymous namespace
 
 bool JsonPrinter::is_available(const dds_topic_descriptor_t* descriptor) {
@@ -220,7 +273,8 @@ std::string JsonPrinter::format(
     const uint8_t* cdr_data,
     size_t cdr_len,
     const dds_topic_descriptor_t* descriptor,
-    uint32_t xcdr_version)
+    uint32_t xcdr_version,
+    const char* type_name)
 {
     if (!cdr_data || cdr_len == 0 || !is_available(descriptor)) {
         return "";
@@ -231,7 +285,15 @@ std::string JsonPrinter::format(
         return "";
     }
 
-    const auto* main_struct = find_main_struct(*mapping);
+    // Find the main struct - prefer type name lookup if provided
+    const DDS_XTypes_CompleteStructType* main_struct = nullptr;
+    if (type_name && type_name[0] != '\0') {
+        main_struct = find_struct_by_type_name(type_name, *mapping);
+    }
+    // Fallback to heuristic if type name not provided or not found
+    if (!main_struct) {
+        main_struct = find_main_struct(*mapping);
+    }
     if (!main_struct) {
         dds_sample_free(mapping, &DDS_XTypes_TypeMapping_desc, DDS_FREE_ALL);
         return "";

@@ -1,0 +1,30 @@
+# Version Compatibility Test Configuration
+#
+# This file defines the CycloneDDS versions and dependencies used for
+# version compatibility testing between cddsctl and test publishers.
+#
+# Usage:
+#   - Python script: tests/test_version_compat.py
+#   - Shell script: tests/version_compat_test.sh
+
+# CycloneDDS versions to test for compatibility
+cyclonedds_versions:
+  - "0.10.1"
+  - "0.10.2"
+  - "0.10.3"
+  - "0.10.4"
+  - "0.10.5"
+  # NOTE: 11.0.0 requires CMake 3.21+, skipped on older CMake
+
+# Other dependency versions used during testing
+dependency_versions:
+  iceoryx: "2.0.5"
+  yaml_cpp: "0.8.0"
+
+# Notes about version requirements and compatibility
+notes:
+  min_version: "0.10.1"
+  reason: "cddsctl requires dds_typeinfo_t API from CycloneDDS 0.10.1+"
+  additional: |
+    0.9.x is NOT supported due to missing dds_typeinfo_t API.
+    11.0.0 requires cddsctl built with compatible iceoryx version.

@@ -1,0 +1,76 @@
+// ArraysAndSequences.idl
+// Demonstrates various array and sequence types in IDL
+// Shows fixed-size arrays, unbounded sequences, and bounded sequences
+
+module demo {
+    module arrays {
+
+        // Fixed-size arrays (similar to C arrays)
+        @final
+        struct FixedArrays {
+            // 1D arrays
+            double position_3d[3];        // XYZ position
+            float rotation_quat[4];       // Quaternion (x, y, z, w)
+            long color_rgb[3];            // RGB values
+
+            // 2D array - transformation matrix
+            double transform_3x3[3][3];   // 3x3 rotation matrix
+
+            // Byte array for raw data
+            octet raw_bytes[64];          // Fixed-size byte buffer
+
+            // Character array (C-style string buffer)
+            char fixed_string[32];        // Fixed-length string buffer
+        };
+
+        // Unbounded sequences (dynamic arrays with no size limit)
+        @final
+        struct UnboundedSequences {
+            // Basic type sequences
+            sequence<double> double_values;     // Unbounded double array
+            sequence<long> int_values;          // Unbounded integer array
+            sequence<float> float_values;       // Unbounded float array
+
+            // String sequence
+            sequence<string> names;             // List of names
+
+            // Octet sequence for binary data
+            sequence<octet> binary_data;        // Variable-length binary
+        };
+
+        // Bounded sequences (dynamic arrays with maximum size)
+        @final
+        struct BoundedSequences {
+            // Bounded sequences with @max annotation (OMG IDL 4.2+)
+            // Note: @max is recognized by modern DDS implementations
+            sequence<double, 10> recent_positions;     // Max 10 positions
+            sequence<long, 100> sensor_readings;       // Max 100 readings
+            sequence<string, 20> joint_names;          // Max 20 joint names
+            sequence<octet, 1024> packet_buffer;       // Max 1KB packet
+        };
+
+        // Wrapper for 6-DOF pose array (needed for sequence of arrays)
+        @final
+        struct Pose6D {
+            double values[6];               // [x, y, z, roll, pitch, yaw]
+        };
+
+        // Mixed arrays and sequences
+        @final
+        struct MixedArrays {
+            // Current fixed-size value
+            double current_pose[6];         // [x, y, z, roll, pitch, yaw]
+
+            // History of values (sequence of fixed arrays via wrapper)
+            sequence<Pose6D> pose_history;  // Sequence of 6-DOF poses
+
+            // 2D grid data (matrix-like structure)
+            sequence<sequence<double> > grid_data;  // 2D grid (rows x cols)
+
+            // Multiple sensor readings
+            long sensor_ids[4];             // Fixed: 4 sensors
+            sequence<double> timestamps;    // Variable: readings per sensor
+        };
+
+    };
+};

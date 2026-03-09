@@ -1,0 +1,111 @@
+name: Ubuntu Matrix Test
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, ubuntu-22.04, ubuntu-24.04]
+      fail-fast: false
+
+    runs-on: ${{ matrix.os }}
+
+    env:
+      DEBIAN_FRONTEND: noninteractive
+      BUILD_TYPE: Release
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake g++ ninja-build libacl1-dev git
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: 3rd_party
+          key: deps-${{ matrix.os }}-iceoryx2.0.3-cyclonedds0.10.2
+
+      - name: Build dependencies
+        run: ./scripts/build_deps.sh
+
+      - name: Configure
+        run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+
+      - name: Build
+        run: cmake --build build -j
+
+      - name: Run unit tests
+        run: ./build/tests/cddsctl_tests
+
+      - name: Verify CLI help
+        run: ./build/cli/cddsctl --help
+
+      - name: Build test publisher
+        run: cmake --build build --target test_publisher -j
+
+      - name: Test Shared Memory Mode (iceoryx)
+        run: |
+          echo "===== Testing Shared Memory Mode ====="
+
+          # Start RouDi (iceoryx daemon)
+          ./3rd_party/iceoryx/bin/iox-roudi -c /dev/null &
+          ROU_PID=$!
+          sleep 2
+
+          # Start publisher with SHM config
+          CYCLONEDDS_URI="file://$(pwd)/.github/workflows/config/cyclonedds-shm.xml" \
+            ./build/examples/test_publisher --topic /test/shm --rate 10 &
+          PUB_PID=$!
+          sleep 3
+
+          # Test cddsctl with SHM
+          echo "Testing cddsctl list (SHM)..."
+          CYCLONEDDS_URI="file://$(pwd)/.github/workflows/config/cyclonedds-shm.xml" \
+            timeout 10 ./build/cli/cddsctl list || true
+
+          echo "Testing cddsctl echo (SHM)..."
+          CYCLONEDDS_URI="file://$(pwd)/.github/workflows/config/cyclonedds-shm.xml" \
+            timeout 5 ./build/cli/cddsctl echo /test/shm -n 3 || true
+
+          # Cleanup
+          kill $PUB_PID 2>/dev/null || true
+          kill $ROU_PID 2>/dev/null || true
+          sleep 1
+
+      - name: Test UDP Loopback Mode
+        run: |
+          echo "===== Testing UDP Loopback Mode ====="
+
+          # Start publisher with UDP config
+          CYCLONEDDS_URI="file://$(pwd)/.github/workflows/config/cyclonedds-udp.xml" \
+            ./build/examples/test_publisher --topic /test/udp --rate 10 &
+          PUB_PID=$!
+          sleep 3
+
+          # Test cddsctl with UDP
+          echo "Testing cddsctl list (UDP)..."
+          CYCLONEDDS_URI="file://$(pwd)/.github/workflows/config/cyclonedds-udp.xml" \
+            timeout 10 ./build/cli/cddsctl list || true
+
+          echo "Testing cddsctl echo (UDP)..."
+          CYCLONEDDS_URI="file://$(pwd)/.github/workflows/config/cyclonedds-udp.xml" \
+            timeout 5 ./build/cli/cddsctl echo /test/udp -n 3 || true
+
+          # Cleanup
+          kill $PUB_PID 2>/dev/null || true
+
+      - name: Upload build artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.os }}
+          path: build/
+          retention-days: 3

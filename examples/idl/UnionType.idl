@@ -1,0 +1,104 @@
+// UnionType.idl
+// Demonstrates discriminated unions in OMG IDL
+// Unions allow a single value to hold different types based on a discriminator
+
+module demo {
+    module unions {
+
+        // Discriminator for DataValue union
+        enum DataType {
+            TYPE_EMPTY,     // No value
+            TYPE_INTEGER,   // long value
+            TYPE_FLOAT,     // double value
+            TYPE_STRING,    // string value
+            TYPE_BINARY     // octet sequence
+        };
+
+        // Discriminated union for variant data type
+        // Similar to std::variant or boost::variant in C++
+        union DataValue switch (DataType) {
+            case TYPE_EMPTY:
+                boolean empty_flag;     // Placeholder when empty
+            case TYPE_INTEGER:
+                long int_val;
+            case TYPE_FLOAT:
+                double float_val;
+            case TYPE_STRING:
+                string str_val;
+            case TYPE_BINARY:
+                sequence<octet> binary_val;
+        };
+
+        // Status discriminator for command result
+        enum ResultStatus {
+            RESULT_SUCCESS,
+            RESULT_ERROR_CODE,
+            RESULT_ERROR_MESSAGE
+        };
+
+        // Union for command result (success or various error types)
+        union CommandResult switch (ResultStatus) {
+            case RESULT_SUCCESS:
+                boolean success;        // true if successful
+            case RESULT_ERROR_CODE:
+                long error_code;        // Numeric error code
+            case RESULT_ERROR_MESSAGE:
+                string error_message;   // Human-readable error
+        };
+
+        // Numeric type discriminator
+        enum NumericType {
+            NUM_INT,
+            NUM_FLOAT,
+            NUM_ARRAY
+        };
+
+        // Union for numeric data (scalar or array)
+        union NumericData switch (NumericType) {
+            case NUM_INT:
+                long int_value;
+            case NUM_FLOAT:
+                double float_value;
+            case NUM_ARRAY:
+                sequence<double> array_value;
+        };
+
+        // Sensor reading with union payload
+        struct SensorReading {
+            long long timestamp;
+            string sensor_id;
+
+            // The union field - can hold different types
+            DataValue value;
+
+            // Quality indicator
+            float confidence;       // 0.0 to 1.0
+        };
+
+        // Command response using union
+        struct CommandResponse {
+            long long sequence_num;     // Command sequence number
+            string command_name;        // Command that was executed
+
+            // Result can be success or error information
+            CommandResult result;
+
+            // Additional data (optional via union)
+            DataValue return_value;
+        };
+
+        // Multi-value parameter with union
+        struct Parameter {
+            string name;
+            string description;
+
+            // Parameter value can be various types
+            DataValue value;
+
+            // Range constraints (optional)
+            NumericData min_value;
+            NumericData max_value;
+        };
+
+    };
+};

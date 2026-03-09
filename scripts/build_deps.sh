@@ -10,10 +10,14 @@ THIRD_PARTY="${PROJECT_ROOT}/3rd_party"
 BUILD_DIR="${THIRD_PARTY}/build"
 JOBS=$(nproc 2>/dev/null || echo 4)
 
-# Versions
-ICEORYX_VERSION="2.0.5"
-CYCLONEDDS_VERSION="0.10.2"
-YAMLCPP_VERSION="0.8.0"
+# Load versions from .versions file
+VERSIONS_FILE="${PROJECT_ROOT}/.versions"
+if [[ -f "${VERSIONS_FILE}" ]]; then
+    source "${VERSIONS_FILE}"
+else
+    echo "Error: .versions file not found at ${VERSIONS_FILE}"
+    exit 1
+fi
 
 # Install prefixes
 ICEORYX_PREFIX="${THIRD_PARTY}/iceoryx"

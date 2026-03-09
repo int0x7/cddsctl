@@ -5,6 +5,9 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Debug symbols for all build types
+add_compile_options(-g)
+
 # Use GNUInstallDirs for standard install paths
 include(GNUInstallDirs)
 
@@ -17,11 +20,19 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Third-party directory
 set(CDDSCTL_3RD_PARTY ${CMAKE_CURRENT_SOURCE_DIR}/3rd_party)
 
+# Load versions from .versions file
+file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/.versions" VERSION_LINES)
+foreach(LINE ${VERSION_LINES})
+  if(LINE MATCHES "^([A-Z_]+)=(.+)$")
+    set(${CMAKE_MATCH_1} ${CMAKE_MATCH_2})
+  endif()
+endforeach()
+
 # Third-party library paths
 set(YAMLCPP_DIR ${CDDSCTL_3RD_PARTY}/yaml-cpp)
 set(ICEORYX_DIR ${CDDSCTL_3RD_PARTY}/iceoryx)
-set(CYCLONEDDS_DIR ${CDDSCTL_3RD_PARTY}/cyclonedds-0.10.2)
-set(CYCLONEDDS_CXX_DIR ${CDDSCTL_3RD_PARTY}/cyclonedds-cxx-0.10.2)
+set(CYCLONEDDS_DIR ${CDDSCTL_3RD_PARTY}/cyclonedds-${CYCLONEDDS_VERSION})
+set(CYCLONEDDS_CXX_DIR ${CDDSCTL_3RD_PARTY}/cyclonedds-cxx-${CYCLONEDDS_VERSION})
 list(APPEND CMAKE_PREFIX_PATH ${YAMLCPP_DIR} ${ICEORYX_DIR} ${CYCLONEDDS_DIR} ${CYCLONEDDS_CXX_DIR})
 
 # CycloneDDS depends on iceoryx, need to find iceoryx targets first (static libs)
