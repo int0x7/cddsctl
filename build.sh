@@ -15,7 +15,21 @@ else
     exit 1
 fi
 
-# 默认并行数
+# Detect architecture
+ARCH=$(uname -m)
+case "${ARCH}" in
+    x86_64)
+        ARCH_NAME="x86_64"
+        ;;
+    aarch64|arm64)
+        ARCH_NAME="aarch64"
+        ;;
+    *)
+        ARCH_NAME="${ARCH}"
+        ;;
+esac
+
+# Default parallel jobs
 JOBS=$(nproc 2>/dev/null || echo 4)
 
 usage() {
@@ -76,25 +90,31 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+# Architecture-specific dependency paths
+ICEORYX_PREFIX="${THIRD_PARTY}/iceoryx-${ARCH_NAME}"
+CYCLONEDDS_PREFIX="${THIRD_PARTY}/cyclonedds-${CYCLONEDDS_VERSION}-${ARCH_NAME}"
+CYCLONEDDS_CXX_PREFIX="${THIRD_PARTY}/cyclonedds-cxx-${CYCLONEDDS_VERSION}-${ARCH_NAME}"
+YAMLCPP_PREFIX="${THIRD_PARTY}/yaml-cpp-${ARCH_NAME}"
+
 # Check if dependencies exist
 YAMLCPP_OK=0
 ICEORYX_OK=0
 CYCLONEDDS_OK=0
 CYCLONEDDS_CXX_OK=0
 
-if [[ -f "${THIRD_PARTY}/yaml-cpp/lib/libyaml-cpp.a" ]]; then
+if [[ -f "${YAMLCPP_PREFIX}/lib/libyaml-cpp.a" ]]; then
     YAMLCPP_OK=1
 fi
 
-if [[ -f "${THIRD_PARTY}/iceoryx/lib/libiceoryx_posh.a" ]]; then
+if [[ -f "${ICEORYX_PREFIX}/lib/libiceoryx_posh.a" ]]; then
     ICEORYX_OK=1
 fi
 
-if [[ -f "${THIRD_PARTY}/cyclonedds-${CYCLONEDDS_VERSION}/lib/libddsc.a" ]]; then
+if [[ -f "${CYCLONEDDS_PREFIX}/lib/libddsc.a" ]]; then
     CYCLONEDDS_OK=1
 fi
 
-if [[ -f "${THIRD_PARTY}/cyclonedds-cxx-${CYCLONEDDS_VERSION}/lib/libddscxx.a" ]]; then
+if [[ -f "${CYCLONEDDS_CXX_PREFIX}/lib/libddscxx.a" ]]; then
     CYCLONEDDS_CXX_OK=1
 fi
 
@@ -136,6 +156,7 @@ echo "==> Building with ${JOBS} jobs..."
 cmake --build "${BUILD_DIR}" -j "${JOBS}"
 
 echo "==> Build complete!"
+echo "    Architecture: ${ARCH_NAME}"
 echo "    CLI: ${BUILD_DIR}/cli/cddsctl"
 
 if [[ $RUN_TESTS -eq 1 ]]; then
