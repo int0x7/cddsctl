@@ -6,6 +6,7 @@ add_executable(cddsctl
     commands/InfoCommand.cpp
     commands/EchoCommand.cpp
     commands/PsCommand.cpp
+    commands/HzCommand.cpp
 )
 
 target_include_directories(cddsctl PRIVATE

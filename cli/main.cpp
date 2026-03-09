@@ -3,6 +3,7 @@
 #include "commands/InfoCommand.hpp"
 #include "commands/EchoCommand.hpp"
 #include "commands/PsCommand.hpp"
+#include "commands/HzCommand.hpp"
 #include <cddsctl/cli/Command.hpp>
 
 #include <iostream>
@@ -61,6 +62,8 @@ const std::unordered_map<std::string, CommandEntry>& get_commands() {
                     "Show information about a DDS topic"}},
         {"ps",     {[]() { return std::make_unique<cddsctl::cli::PsCommand>(); },
                     "Show DDS participants and applications"}},
+        {"hz",     {[]() { return std::make_unique<cddsctl::cli::HzCommand>(); },
+                    "Display publishing frequency of a DDS topic"}},
     };
     return commands;
 }
