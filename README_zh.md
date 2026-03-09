@@ -25,6 +25,7 @@ $ cddsctl --help
   Usage: cddsctl <command> [options]
 
   Commands:
+    hz        Display publishing frequency of a DDS topic
     info      Show information about a DDS topic
     list      List available DDS topics
     echo      Print messages from a DDS topic
@@ -38,6 +39,7 @@ $ cddsctl --help
 
 - `list`：查看 DDS 网络中发现的 topic 列表
 - `echo`：实时打印指定 topic 的消息内容（支持 YAML/JSON 格式）
+- `hz`：显示 topic 发布频率（类似 `rostopic hz`）
 - `record`：将指定 topic 记录为 **MCAP** 文件
 - **XTypes 类型自省**：无需 IDL 编译即可自动发现类型
 - **共享内存**：通过 iceoryx 实现零拷贝（自动回退到 UDP）
@@ -175,6 +177,18 @@ cddsctl record /test/sensor -o log.mcap
 cddsctl record MotorState IMU CameraImage -o run.mcap
 ```
 
+监控 topic 频率：
+
+```bash
+cddsctl hz /test/sensor
+```
+
+同时监控多个 topic 频率：
+
+```bash
+cddsctl hz /rt/imu_state /rt/joy
+```
+
 ---
 
 ## 命令
@@ -265,6 +279,65 @@ JSON 格式 (`-F json`)：
   },
   "overall_status": "STATUS_OK"
 }
+```
+
+---
+
+### hz
+
+显示 DDS topic 的发布频率（类似 `rostopic hz`）。
+
+```bash
+cddsctl hz <topic...> [options]
+```
+
+选项：
+
+- `-d, --domain=ID`：指定 DDS domain ID（默认：0）
+- `-w, --window=N`：频率计算窗口大小（默认：100）
+- `-t, --timeout=SEC`：topic 发现超时时间（默认：2.0 秒）
+
+示例 - 单个 topic：
+
+```bash
+cddsctl hz /test/sensor
+```
+
+输出示例：
+
+```
+subscribed to [/test/sensor]
+average rate: 59.987 Hz
+    min: 59.823 Hz
+    max: 60.156 Hz
+    std dev: 0.092 Hz
+    window: 100
+```
+
+示例 - 多个 topic：
+
+```bash
+cddsctl hz /rt/imu_state /rt/joy
+```
+
+输出示例：
+
+```
+subscribed to [/rt/imu_state]
+subscribed to [/rt/joy]
+[/rt/imu_state]
+average rate: 498.738 Hz
+    min: 411.489 Hz
+    max: 580.234 Hz
+    std dev: 25.153 Hz
+    window: 100
+[/rt/joy]
+average rate: 60.001 Hz
+    min: 59.768 Hz
+    max: 60.192 Hz
+    std dev: 0.085 Hz
+    window: 100
+---
 ```
 
 ---

@@ -25,6 +25,7 @@ $ cddsctl --help
   Usage: cddsctl <command> [options]
 
   Commands:
+    hz        Display publishing frequency of a DDS topic
     info      Show information about a DDS topic
     list      List available DDS topics
     echo      Print messages from a DDS topic
@@ -38,6 +39,7 @@ Core Features:
 
 - `list`: List discovered topics in DDS network
 - `echo`: Print messages from a topic in real-time (YAML/JSON format)
+- `hz`: Display topic publishing frequency (like `rostopic hz`)
 - `record`: Record topics to **MCAP** files
 - **XTypes introspection**: Auto-discover types without IDL compilation
 - **Shared memory**: Zero-copy via iceoryx (automatic fallback to UDP)
@@ -175,6 +177,18 @@ Record multiple topics:
 cddsctl record MotorState IMU CameraImage -o run.mcap
 ```
 
+Monitor topic frequency:
+
+```bash
+cddsctl hz /test/sensor
+```
+
+Monitor multiple topic frequencies:
+
+```bash
+cddsctl hz /rt/imu_state /rt/joy
+```
+
 ---
 
 ## Commands
@@ -265,6 +279,65 @@ JSON format (`-F json`):
   },
   "overall_status": "STATUS_OK"
 }
+```
+
+---
+
+### hz
+
+Display publishing frequency of DDS topics (similar to `rostopic hz`).
+
+```bash
+cddsctl hz <topic...> [options]
+```
+
+Options:
+
+- `-d, --domain=ID`: DDS domain ID (default: 0)
+- `-w, --window=N`: Window size for rate calculation (default: 100)
+- `-t, --timeout=SEC`: Topic discovery timeout in seconds (default: 2.0)
+
+Example - single topic:
+
+```bash
+cddsctl hz /test/sensor
+```
+
+Example output:
+
+```
+subscribed to [/test/sensor]
+average rate: 59.987 Hz
+    min: 59.823 Hz
+    max: 60.156 Hz
+    std dev: 0.092 Hz
+    window: 100
+```
+
+Example - multiple topics:
+
+```bash
+cddsctl hz /rt/imu_state /rt/joy
+```
+
+Example output:
+
+```
+subscribed to [/rt/imu_state]
+subscribed to [/rt/joy]
+[/rt/imu_state]
+average rate: 498.738 Hz
+    min: 411.489 Hz
+    max: 580.234 Hz
+    std dev: 25.153 Hz
+    window: 100
+[/rt/joy]
+average rate: 60.001 Hz
+    min: 59.768 Hz
+    max: 60.192 Hz
+    std dev: 0.085 Hz
+    window: 100
+---
 ```
 
 ---
