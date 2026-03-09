@@ -28,7 +28,6 @@ usage() {
     echo "  -j N              Number of parallel jobs (default: $JOBS)"
     echo "  -t, --test        Run tests after build"
     echo "  -r, --release     Build in Release mode (default: Debug)"
-    echo "  -n, --ninja       Use Ninja generator (default: Unix Makefiles)"
     echo "  -h, --help        Show this help"
 }
 
@@ -37,7 +36,6 @@ BUILD_DEPS=0
 CLEAN_DEPS=0
 RUN_TESTS=0
 RELEASE=0
-NINJA=0
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -64,10 +62,6 @@ while [[ $# -gt 0 ]]; do
             ;;
         -r|--release)
             RELEASE=1
-            shift
-            ;;
-        -n|--ninja)
-            NINJA=1
             shift
             ;;
         -h|--help)
@@ -130,9 +124,6 @@ fi
 
 # Build cmake options
 CMAKE_OPTS=()
-if [[ $NINJA -eq 1 ]]; then
-    CMAKE_OPTS+=(-G Ninja)
-fi
 if [[ $RELEASE -eq 1 ]]; then
     CMAKE_OPTS+=(-DCMAKE_BUILD_TYPE=Release)
 fi

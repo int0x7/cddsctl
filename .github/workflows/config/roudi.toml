@@ -1,0 +1,14 @@
+[general]
+version = 1
+
+[roudi]
+# Default shared memory segment
+shm_size = 1024000000  # ~1GB
+
+[monitoring]
+# Enable monitoring
+enabled = false
+
+[log]
+# Log level
+level = "warn"

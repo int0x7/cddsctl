@@ -32,7 +32,7 @@ jobs:
       - name: Install dependencies
         run: |
           apt-get update
-          apt-get install -y cmake g++ ninja-build libacl1-dev git
+          apt-get install -y cmake g++ libacl1-dev git
 
       - name: Cache dependencies
         uses: actions/cache@v4
@@ -44,7 +44,7 @@ jobs:
         run: ./scripts/build_deps.sh
 
       - name: Configure
-        run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+        run: cmake -B build -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
 
       - name: Build
         run: cmake --build build -j
@@ -60,10 +60,11 @@ jobs:
 
       - name: Test Shared Memory Mode (iceoryx)
         run: |
+          set -e
           echo "===== Testing Shared Memory Mode ====="
 
           # Start RouDi (iceoryx daemon)
-          ./3rd_party/iceoryx/bin/iox-roudi -c /dev/null &
+          ./3rd_party/iceoryx/bin/iox-roudi -c .github/workflows/config/roudi.toml &
           ROU_PID=$!
           sleep 2
 
@@ -76,11 +77,11 @@ jobs:
           # Test cddsctl with SHM
           echo "Testing cddsctl list (SHM)..."
           CYCLONEDDS_URI="file://$(pwd)/.github/workflows/config/cyclonedds-shm.xml" \
-            timeout 10 ./build/cli/cddsctl list || true
+            timeout 10 ./build/cli/cddsctl list | grep -q "/test/shm"
 
           echo "Testing cddsctl echo (SHM)..."
           CYCLONEDDS_URI="file://$(pwd)/.github/workflows/config/cyclonedds-shm.xml" \
-            timeout 5 ./build/cli/cddsctl echo /test/shm -n 3 || true
+            timeout 5 ./build/cli/cddsctl echo /test/shm -n 3
 
           # Cleanup
           kill $PUB_PID 2>/dev/null || true
@@ -89,6 +90,7 @@ jobs:
 
       - name: Test UDP Loopback Mode
         run: |
+          set -e
           echo "===== Testing UDP Loopback Mode ====="
 
           # Start publisher with UDP config
@@ -100,11 +102,11 @@ jobs:
           # Test cddsctl with UDP
           echo "Testing cddsctl list (UDP)..."
           CYCLONEDDS_URI="file://$(pwd)/.github/workflows/config/cyclonedds-udp.xml" \
-            timeout 10 ./build/cli/cddsctl list || true
+            timeout 10 ./build/cli/cddsctl list | grep -q "/test/udp"
 
           echo "Testing cddsctl echo (UDP)..."
           CYCLONEDDS_URI="file://$(pwd)/.github/workflows/config/cyclonedds-udp.xml" \
-            timeout 5 ./build/cli/cddsctl echo /test/udp -n 3 || true
+            timeout 5 ./build/cli/cddsctl echo /test/udp -n 3
 
           # Cleanup
           kill $PUB_PID 2>/dev/null || true
