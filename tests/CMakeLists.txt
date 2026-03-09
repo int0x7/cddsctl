@@ -71,6 +71,7 @@ if(CycloneDDS-CXX_FOUND)
 
     # IDL basic type tests
     add_executable(idl_basic_tests
+        test_main.cpp
         idl/test_idl_basic.cpp
     )
 
@@ -94,6 +95,7 @@ if(CycloneDDS-CXX_FOUND)
 
     # IDL YAML formatting tests
     add_executable(idl_yaml_tests
+        test_main.cpp
         idl/test_idl_yaml.cpp
     )
 

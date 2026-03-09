@@ -27,6 +27,8 @@ usage() {
     echo "  --clean-deps      Clean and rebuild dependencies"
     echo "  -j N              Number of parallel jobs (default: $JOBS)"
     echo "  -t, --test        Run tests after build"
+    echo "  -r, --release     Build in Release mode (default: Debug)"
+    echo "  -n, --ninja       Use Ninja generator (default: Unix Makefiles)"
     echo "  -h, --help        Show this help"
 }
 
@@ -34,6 +36,8 @@ CLEAN=0
 BUILD_DEPS=0
 CLEAN_DEPS=0
 RUN_TESTS=0
+RELEASE=0
+NINJA=0
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -56,6 +60,14 @@ while [[ $# -gt 0 ]]; do
             ;;
         -t|--test)
             RUN_TESTS=1
+            shift
+            ;;
+        -r|--release)
+            RELEASE=1
+            shift
+            ;;
+        -n|--ninja)
+            NINJA=1
             shift
             ;;
         -h|--help)
@@ -116,9 +128,18 @@ if [[ $CLEAN -eq 1 ]]; then
     rm -rf "${BUILD_DIR}"
 fi
 
+# Build cmake options
+CMAKE_OPTS=()
+if [[ $NINJA -eq 1 ]]; then
+    CMAKE_OPTS+=(-G Ninja)
+fi
+if [[ $RELEASE -eq 1 ]]; then
+    CMAKE_OPTS+=(-DCMAKE_BUILD_TYPE=Release)
+fi
+
 echo "==> Configuring..."
 mkdir -p "${BUILD_DIR}"
-cmake -S "${PROJECT_ROOT}" -B "${BUILD_DIR}"
+cmake -S "${PROJECT_ROOT}" -B "${BUILD_DIR}" "${CMAKE_OPTS[@]}"
 
 echo "==> Building with ${JOBS} jobs..."
 cmake --build "${BUILD_DIR}" -j "${JOBS}"

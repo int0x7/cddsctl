@@ -32,14 +32,5 @@ jobs:
       - name: Build dependencies
         run: ./scripts/build_deps.sh
 
-      - name: Configure
-        run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
-
-      - name: Build
-        run: cmake --build build -j
-
-      - name: Run tests
-        run: ./build/tests/cddsctl_tests
-
-      - name: Verify CLI
-        run: ./build/cli/cddsctl --help
+      - name: Build and Test
+        run: ./build.sh -t -r -n
