@@ -1,17 +1,34 @@
 [general]
 version = 1
 
-[roudi]
-shm_size = 1024000000
+# 共享内存段配置
+# 每个 mempool 定义一种大小的内存块
+# size: 内存块大小 (字节)
+# count: 该大小内存块的数量
 
 [[segment]]
-name = "iox1"
-size = 1024000000
-reader_count = 100
-writer_count = 100
 
-[monitoring]
-enabled = false
+# 小消息 (128 字节)
+[[segment.mempool]]
+size = 128
+count = 10000
 
-[log]
-level = "warn"
+# 中等消息 (1KB)
+[[segment.mempool]]
+size = 1024
+count = 5000
+
+# 较大消息 (16KB)
+[[segment.mempool]]
+size = 16384
+count = 1000
+
+# 大消息 (128KB)
+[[segment.mempool]]
+size = 131072
+count = 200
+
+# 超大消息 (1MB)
+[[segment.mempool]]
+size = 1048576
+count = 50
