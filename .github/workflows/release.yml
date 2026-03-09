@@ -9,7 +9,8 @@ permissions:
   contents: write
 
 jobs:
-  build:
+  build-x86_64:
+    name: Build Release (x86_64)
     runs-on: ubuntu-22.04
     container: ubuntu:20.04
     env:
@@ -28,7 +29,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: 3rd_party
-          key: deps-${{ runner.os }}-cyclonedds0.10.2-shm
+          key: deps-${{ runner.os }}-x86_64-cyclonedds0.10.2-shm
 
       - name: Build
         run: |
@@ -52,12 +53,57 @@ jobs:
           name: ${{ env.PKG_NAME }}
           path: ${{ env.PKG_NAME }}.tar.gz
 
+  build-aarch64:
+    name: Build Release (aarch64)
+    runs-on: ubuntu-22.04-arm
+    container: ubuntu:20.04
+    env:
+      DEBIAN_FRONTEND: noninteractive
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y cmake g++ ninja-build libacl1-dev git
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: 3rd_party
+          key: deps-${{ runner.os }}-aarch64-cyclonedds0.10.2-shm
+
+      - name: Build
+        run: |
+          ./build.sh -c
+
+      - name: Run tests
+        run: ./build/tests/cddsctl_tests
+
+      - name: Package
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          PKG_NAME="cddsctl-${VERSION}-linux-aarch64"
+          mkdir -p ${PKG_NAME}/bin
+          cp build/cli/cddsctl ${PKG_NAME}/bin/
+          tar -czvf ${PKG_NAME}.tar.gz ${PKG_NAME}
+          echo "PKG_NAME=${PKG_NAME}" >> $GITHUB_ENV
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.PKG_NAME }}
+          path: ${{ env.PKG_NAME }}.tar.gz
+
   release:
+    name: Create Release
     runs-on: ubuntu-22.04
     container: ubuntu:20.04
     env:
       DEBIAN_FRONTEND: noninteractive
-    needs: build
+    needs: [build-x86_64, build-aarch64]
 
     steps:
       - name: Install dependencies
@@ -94,9 +140,16 @@ jobs:
           echo "" >> RELEASE_NOTES.md
           echo "## Installation" >> RELEASE_NOTES.md
           echo "" >> RELEASE_NOTES.md
+          echo "### x86_64" >> RELEASE_NOTES.md
           echo "\`\`\`bash" >> RELEASE_NOTES.md
           echo "tar -xzf cddsctl-${VERSION}-linux-x86_64.tar.gz" >> RELEASE_NOTES.md
           echo "sudo mv cddsctl-${VERSION}-linux-x86_64/bin/cddsctl /usr/local/bin/" >> RELEASE_NOTES.md
+          echo "\`\`\`" >> RELEASE_NOTES.md
+          echo "" >> RELEASE_NOTES.md
+          echo "### ARM64 (aarch64)" >> RELEASE_NOTES.md
+          echo "\`\`\`bash" >> RELEASE_NOTES.md
+          echo "tar -xzf cddsctl-${VERSION}-linux-aarch64.tar.gz" >> RELEASE_NOTES.md
+          echo "sudo mv cddsctl-${VERSION}-linux-aarch64/bin/cddsctl /usr/local/bin/" >> RELEASE_NOTES.md
           echo "\`\`\`" >> RELEASE_NOTES.md
           echo "" >> RELEASE_NOTES.md
           echo "Built with CycloneDDS 0.10.2 and iceoryx 2.0.5 (shared memory)." >> RELEASE_NOTES.md

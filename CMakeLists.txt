@@ -5,6 +5,24 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Detect target architecture
+if(CMAKE_SYSTEM_PROCESSOR)
+    set(TARGET_ARCH "${CMAKE_SYSTEM_PROCESSOR}")
+else()
+    execute_process(COMMAND uname -m OUTPUT_VARIABLE TARGET_ARCH OUTPUT_STRIP_TRAILING_WHITESPACE)
+endif()
+
+# Normalize architecture names
+if(TARGET_ARCH MATCHES "^(x86_64|amd64)$")
+    set(TARGET_ARCH_NAME "x86_64")
+elseif(TARGET_ARCH MATCHES "^(aarch64|arm64)$")
+    set(TARGET_ARCH_NAME "aarch64")
+else()
+    set(TARGET_ARCH_NAME "${TARGET_ARCH}")
+endif()
+
+message(STATUS "Target architecture: ${TARGET_ARCH_NAME}")
+
 # Debug symbols for all build types
 add_compile_options(-g)
 
@@ -28,11 +46,11 @@ foreach(LINE ${VERSION_LINES})
   endif()
 endforeach()
 
-# Third-party library paths
-set(YAMLCPP_DIR ${CDDSCTL_3RD_PARTY}/yaml-cpp)
-set(ICEORYX_DIR ${CDDSCTL_3RD_PARTY}/iceoryx)
-set(CYCLONEDDS_DIR ${CDDSCTL_3RD_PARTY}/cyclonedds-${CYCLONEDDS_VERSION})
-set(CYCLONEDDS_CXX_DIR ${CDDSCTL_3RD_PARTY}/cyclonedds-cxx-${CYCLONEDDS_VERSION})
+# Third-party library paths (architecture-specific)
+set(YAMLCPP_DIR ${CDDSCTL_3RD_PARTY}/yaml-cpp-${TARGET_ARCH_NAME})
+set(ICEORYX_DIR ${CDDSCTL_3RD_PARTY}/iceoryx-${TARGET_ARCH_NAME})
+set(CYCLONEDDS_DIR ${CDDSCTL_3RD_PARTY}/cyclonedds-${CYCLONEDDS_VERSION}-${TARGET_ARCH_NAME})
+set(CYCLONEDDS_CXX_DIR ${CDDSCTL_3RD_PARTY}/cyclonedds-cxx-${CYCLONEDDS_VERSION}-${TARGET_ARCH_NAME})
 list(APPEND CMAKE_PREFIX_PATH ${YAMLCPP_DIR} ${ICEORYX_DIR} ${CYCLONEDDS_DIR} ${CYCLONEDDS_CXX_DIR})
 
 # CycloneDDS depends on iceoryx, need to find iceoryx targets first (static libs)
@@ -86,6 +104,7 @@ message(STATUS "========================================")
 message(STATUS "cddsctl Configuration")
 message(STATUS "========================================")
 message(STATUS "Version:        ${PROJECT_VERSION}")
+message(STATUS "Architecture:   ${TARGET_ARCH_NAME}")
 message(STATUS "Build Examples: ${BUILD_EXAMPLES}")
 message(STATUS "========================================")
 message(STATUS "")

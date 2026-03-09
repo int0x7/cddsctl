@@ -10,6 +10,25 @@ THIRD_PARTY="${PROJECT_ROOT}/3rd_party"
 BUILD_DIR="${THIRD_PARTY}/build"
 JOBS=$(nproc 2>/dev/null || echo 4)
 
+# Detect architecture
+ARCH=$(uname -m)
+case "${ARCH}" in
+    x86_64)
+        ARCH_NAME="x86_64"
+        ;;
+    aarch64|arm64)
+        ARCH_NAME="aarch64"
+        ;;
+    *)
+        echo "Warning: Unsupported architecture '${ARCH}', defaulting to ${ARCH}"
+        ARCH_NAME="${ARCH}"
+        ;;
+esac
+
+# Cross-compilation support
+CROSS_COMPILE=0
+CROSS_ARCH=""
+
 # Load versions from .versions file
 VERSIONS_FILE="${PROJECT_ROOT}/.versions"
 if [[ -f "${VERSIONS_FILE}" ]]; then
@@ -19,11 +38,11 @@ else
     exit 1
 fi
 
-# Install prefixes
-ICEORYX_PREFIX="${THIRD_PARTY}/iceoryx"
-CYCLONEDDS_PREFIX="${THIRD_PARTY}/cyclonedds-${CYCLONEDDS_VERSION}"
-CYCLONEDDS_CXX_PREFIX="${THIRD_PARTY}/cyclonedds-cxx-${CYCLONEDDS_VERSION}"
-YAMLCPP_PREFIX="${THIRD_PARTY}/yaml-cpp"
+# Install prefixes (architecture-specific)
+ICEORYX_PREFIX="${THIRD_PARTY}/iceoryx-${ARCH_NAME}"
+CYCLONEDDS_PREFIX="${THIRD_PARTY}/cyclonedds-${CYCLONEDDS_VERSION}-${ARCH_NAME}"
+CYCLONEDDS_CXX_PREFIX="${THIRD_PARTY}/cyclonedds-cxx-${CYCLONEDDS_VERSION}-${ARCH_NAME}"
+YAMLCPP_PREFIX="${THIRD_PARTY}/yaml-cpp-${ARCH_NAME}"
 
 usage() {
     echo "Usage: $0 [OPTIONS]"
@@ -31,6 +50,7 @@ usage() {
     echo "Options:"
     echo "  -c, --clean     Clean build (remove build directory first)"
     echo "  -j N            Number of parallel jobs (default: $JOBS)"
+    echo "  --arch ARCH     Target architecture for cross-compilation (x86_64, aarch64)"
     echo "  -h, --help      Show this help"
 }
 
@@ -44,6 +64,27 @@ while [[ $# -gt 0 ]]; do
             ;;
         -j)
             JOBS="$2"
+            shift 2
+            ;;
+        --arch)
+            CROSS_ARCH="$2"
+            CROSS_COMPILE=1
+            case "${CROSS_ARCH}" in
+                x86_64|aarch64)
+                    ARCH_NAME="${CROSS_ARCH}"
+                    echo "==> Cross-compiling for ${ARCH_NAME}"
+                    ;;
+                *)
+                    echo "Error: Unsupported architecture '${CROSS_ARCH}'"
+                    echo "Supported architectures: x86_64, aarch64"
+                    exit 1
+                    ;;
+            esac
+            # Update prefixes with new architecture
+            ICEORYX_PREFIX="${THIRD_PARTY}/iceoryx-${ARCH_NAME}"
+            CYCLONEDDS_PREFIX="${THIRD_PARTY}/cyclonedds-${CYCLONEDDS_VERSION}-${ARCH_NAME}"
+            CYCLONEDDS_CXX_PREFIX="${THIRD_PARTY}/cyclonedds-cxx-${CYCLONEDDS_VERSION}-${ARCH_NAME}"
+            YAMLCPP_PREFIX="${THIRD_PARTY}/yaml-cpp-${ARCH_NAME}"
             shift 2
             ;;
         -h|--help)
@@ -189,6 +230,10 @@ echo ""
 echo "========================================="
 echo "Dependencies built successfully!"
 echo "========================================="
+echo "Architecture:   ${ARCH_NAME}"
+if [[ ${CROSS_COMPILE} -eq 1 ]]; then
+    echo "Build type:     Cross-compiled"
+fi
 echo "yaml-cpp:       ${YAMLCPP_PREFIX}"
 echo "iceoryx:        ${ICEORYX_PREFIX}"
 echo "CycloneDDS:     ${CYCLONEDDS_PREFIX}"
