@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.2] - 2025-03-09
+
+### Changed
+
+- **Build System**
+  - Remove Ninja generator support, use Unix Makefiles only
+  - Simplify build.sh by removing `-n|--ninja` option
+
+### Fixed
+
+- **CI/CD**
+  - Fix shared memory tests in CI by adding proper RouDi configuration
+  - Add RouDi mempool configuration for CI container compatibility
+  - Fix CI tests to properly fail on errors (remove `|| true`)
+  - Remove ninja-build from CI dependencies
+
 ## [0.0.1] - 2025-03-05
 
 ### Added
