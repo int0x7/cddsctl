@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **ARM64 Architecture Support**
+  - Add ARM64 (aarch64) build support for embedded Linux devices
+  - Architecture detection in build scripts
+  - Cross-compilation support with `--arch` flag
+  - Architecture-specific dependency directories
+  - Multi-arch CI/CD builds (x86_64 and aarch64)
+
 - **CLI Commands**
   - `hz` - Display publishing frequency of DDS topics (like `rostopic hz`)
     - Support single and multiple topic monitoring
