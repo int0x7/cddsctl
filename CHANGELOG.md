@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.0.2] - 2025-03-09
 
+### Added
+
+- **CLI Commands**
+  - `hz` - Display publishing frequency of DDS topics (like `rostopic hz`)
+    - Support single and multiple topic monitoring
+    - Calculate average rate, min/max frequency, and standard deviation
+    - Configurable window size for rate calculation
+    - Real-time updates every second
+
 ### Changed
 
 - **Build System**
