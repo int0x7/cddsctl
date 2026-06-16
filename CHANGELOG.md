@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.3] - 2026-06-16
+
+### Changed
+
+- 发布二进制体积缩小约 44%(~4.0MB → ~2.25MB):链接启用 `--gc-sections`
+  丢弃静态链入 iceoryx/CycloneDDS 中未引用的代码,Release 默认 `-Os`。
+- 发布时分离调试符号:发布的 bin 经 strip 并通过 `--add-gnu-debuglink`
+  关联符号档,符号包仅作为 CI artifact 上传,不挂公开 Release。
+
+### Fixed
+
+- `--version` 不再硬编码:版本号统一以 CMake `project(VERSION)` 为唯一来源,
+  注入给 CLI,避免发布版本与二进制自报版本不一致。
+
 ## [0.0.2] - 2025-03-09
 
 ### Added
