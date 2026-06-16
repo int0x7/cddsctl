@@ -26,6 +26,16 @@ message(STATUS "Target architecture: ${TARGET_ARCH_NAME}")
 # Debug symbols for all build types
 add_compile_options(-g)
 
+# Let the linker drop unreferenced code from the statically-linked DDS stack
+# (iceoryx/CycloneDDS), of which cddsctl uses only a fraction.
+add_compile_options(-ffunction-sections -fdata-sections)
+add_link_options(-Wl,--gc-sections)
+
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+endif()
+add_compile_options($<$<CONFIG:Release>:-Os>)
+
 # Use GNUInstallDirs for standard install paths
 include(GNUInstallDirs)
 
