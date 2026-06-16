@@ -43,9 +43,11 @@
 # Build directory
 build/
 
-# 3rd_party generated directories
+# 3rd_party generated directories (build trees + per-arch install prefixes)
 3rd_party/yaml-cpp/
+3rd_party/yaml-cpp-*/
 3rd_party/iceoryx/
+3rd_party/iceoryx-*/
 3rd_party/cyclonedds-*/
 3rd_party/build/
 
