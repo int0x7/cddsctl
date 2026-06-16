@@ -14,7 +14,7 @@
 
 namespace {
 
-constexpr const char* VERSION = "0.0.2";
+constexpr const char* VERSION = CDDSCTL_VERSION;
 
 constexpr const char* SHM_STATUS = "with SHM";
 
